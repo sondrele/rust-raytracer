@@ -1,21 +1,106 @@
 use material::Material;
 use vec::Vec3;
 
-// struct Triangle {
-//     materials: Vec<Material>,
+pub enum Shape {
+    SphereType(Sphere),
+    PolySetType(PolySet)
+}
 
-// }
+pub struct Vertex {
+    pub matIndex: u32,
+    pub hasNormal: bool,
+    pub position: Vec3,
+    pub normal: Vec3
+}
+
+impl Vertex {
+    pub fn new() -> Vertex {
+        Vertex {
+            matIndex: 0,
+            hasNormal: false,
+            position: Vec3::new(),
+            normal: Vec3::new()
+        }
+    }
+
+    pub fn init(position: Vec3) -> Vertex {
+        Vertex {
+            matIndex: 0,
+            hasNormal: false,
+            position: position,
+            normal: Vec3::new()
+        }
+    }
+}
+
+impl Index<u32, f32> for Vertex {
+    fn index(&self, index: &u32) -> f32 {
+        match index {
+            &0 => self.position[0],
+            &1 => self.position[1],
+            &2 => self.position[2],
+            _ => fail!("Index out of bound: {}", index)
+        }
+    }
+}
+
+pub struct Poly {
+    pub materials: Vec<Material>,
+    pub vertices: [Vertex, ..3],
+    pub vertexMaterial: bool,
+    pub vertexNormal: bool
+}
+
+impl Poly {
+    pub fn new() -> Poly {
+        Poly {
+            materials: Vec::new(),
+            vertices: [
+                Vertex::new(),
+                Vertex::new(),
+                Vertex::new()
+            ],
+            vertexMaterial: false,
+            vertexNormal: false
+        }
+    }
+}
+
+impl Index<u32, Vertex> for Poly {
+    fn index(&self, index: &u32) -> Vertex {
+        match index {
+            &0 => self.vertices[0],
+            &1 => self.vertices[1],
+            &2 => self.vertices[2],
+            _ => fail!("Index out of bound: {}", index)
+        }
+    }
+}
+
+pub struct PolySet {
+    pub materials: Vec<Material>,
+    pub polygons: Vec<Poly>
+}
+
+impl PolySet {
+    pub fn new() -> PolySet {
+        PolySet {
+            materials: Vec::new(),
+            polygons: Vec::new()
+        }
+    }
+}
 
 pub struct Sphere {
-    materials: Vec<Material>,
-    origin: Vec3,
-    radius: f32,
-    xaxis: Vec3,
-    xlength: f32,
-    yaxis: Vec3,
-    ylength: f32,
-    zaxis: Vec3,
-    zlength: f32
+    pub materials: Vec<Material>,
+    pub origin: Vec3,
+    pub radius: f32,
+    pub xaxis: Vec3,
+    pub xlength: f32,
+    pub yaxis: Vec3,
+    pub ylength: f32,
+    pub zaxis: Vec3,
+    pub zlength: f32
 }
 
 impl Sphere {
@@ -35,7 +120,19 @@ impl Sphere {
 }
 
 #[test]
-fn sphere_can_initializes(){
+fn can_init_vertex() {
+    let v = Vertex::new();
+    assert_eq!(v.matIndex, 0);
+}
+
+#[test]
+fn can_init_polygon() {
+    let p = Poly::new();
+    assert_eq!(p.vertexMaterial, false);
+}
+
+#[test]
+fn can_init_sphere(){
     let s = Sphere::new();
-    assert!(s.radius == 0.0);
+    assert_eq!(s.radius, 0.0);
 }

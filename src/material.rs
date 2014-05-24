@@ -52,19 +52,21 @@ impl Color {
 }
 
 pub struct Material {
-    diffuse: Color,
-    ambient: Color,
-    specular: Color,
-    shininess: f32,
-    transparency: f32
+    pub diffuse: Color,
+    pub ambient: Color,
+    pub specular: Color,
+    pub emissive: Color,
+    pub shininess: f32,
+    pub transparency: f32
 }
 
 impl Material {
-    fn new() -> Material {
+    pub fn new() -> Material {
         Material{
             diffuse: Color::new(),
             ambient: Color::new(),
             specular: Color::new(),
+            emissive: Color::new(),
             shininess: 0.0,
             transparency: 0.0
         }
@@ -81,7 +83,7 @@ impl Material {
 
 
 #[test]
-fn RRColor_is_0(){
+fn Color_is_0(){
     let c = Color::new();
 
     assert!(c.r == 0.0);
@@ -90,7 +92,7 @@ fn RRColor_is_0(){
 }
 
 #[test]
-fn RRColor_is_between_0_and_1(){
+fn Color_is_between_0_and_1(){
     let mut c = Color::new();
     c.R(2.0);
     c.G(0.5);

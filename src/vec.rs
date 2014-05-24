@@ -41,6 +41,17 @@ impl Mul<Vec3, Vec3> for Vec3 {
     }
 }
 
+impl Index<u32, f32> for Vec3 {
+    fn index(&self, index: &u32) -> f32 {
+        match index {
+            &0 => self.x,
+            &1 => self.y,
+            &2 => self.z,
+            _ => fail!("Index out of bound: {}", index)
+        }
+    }
+}
+
 impl Vec3 {
     pub fn new() -> Vec3 {
         Vec3::init(0.0, 0.0, 0.0)
@@ -137,4 +148,12 @@ fn vec3_has_crossproduct(){
     assert_eq!(z.x, -2.0);
     assert_eq!(z.y, 4.0);
     assert_eq!(z.z, -2.0);
+}
+
+#[test]
+fn vec3_can_be_indexed(){
+    let x = Vec3::init(1.0, 2.0, 3.0);
+    assert_eq!(x[0], 1.0);
+    assert_eq!(x[1], 2.0);
+    assert_eq!(x[2], 3.0);
 }

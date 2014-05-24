@@ -1,5 +1,5 @@
 RC = rustc
-LIB = src/scene.rs
+LIB = src/tracer.rs
 MAIN = main.rs
 
 EXEC = $(MAIN:.rs=)
@@ -12,9 +12,10 @@ lib: $(LIB)
 	$(RC) --crate-type=lib $^
 
 test:
-	$(RC) $(LIB) --test -o $(TEXEC)$@
-	./$(TEXEC)$@
+	$(RC) $(LIB) --test -o $(TEXEC)
+	./$(TEXEC)
 
 clean:
 	rm -f $(EXEC)
+	rm -f $(TEXEC)
 	rm -f *.rlib

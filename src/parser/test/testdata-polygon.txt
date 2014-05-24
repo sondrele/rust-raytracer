@@ -1,0 +1,6 @@
+poly {
+    numVertices 3
+    pos 0.0 0.5 0.6
+    pos 0.5 0.5 0.6
+    pos 10 0.5 0.6
+  }
