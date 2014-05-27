@@ -1,5 +1,5 @@
-use material::Material;
 use vec::Vec3;
+use scene::material::Material;
 
 pub enum Shape {
     SphereType(Sphere),
@@ -119,20 +119,25 @@ impl Sphere {
     }
 }
 
-#[test]
-fn can_init_vertex() {
-    let v = Vertex::new();
-    assert_eq!(v.matIndex, 0);
-}
+#[cfg(test)]
+mod tests {
+    use scene::shapes::{ Poly, Vertex, Sphere };
 
-#[test]
-fn can_init_polygon() {
-    let p = Poly::new();
-    assert_eq!(p.vertexMaterial, false);
-}
+    #[test]
+    fn can_init_vertex() {
+        let v = Vertex::new();
+        assert_eq!(v.matIndex, 0);
+    }
 
-#[test]
-fn can_init_sphere(){
-    let s = Sphere::new();
-    assert_eq!(s.radius, 0.0);
+    #[test]
+    fn can_init_polygon() {
+        let p = Poly::new();
+        assert_eq!(p.vertexMaterial, false);
+    }
+
+    #[test]
+    fn can_init_sphere(){
+        let s = Sphere::new();
+        assert_eq!(s.radius, 0.0);
+    }
 }

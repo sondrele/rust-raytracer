@@ -1,6 +1,9 @@
 use vec::Vec3;
-use material::Color;
-use shapes::Shape;
+use scene::material::Color;
+use scene::shapes::Shape;
+
+pub mod material;
+pub mod shapes;
 
 // Is it possible to mplement traits instead of using enums,
 // make the fields private data and call trait methods
@@ -34,7 +37,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    fn new() -> Camera {
+    pub fn new() -> Camera {
         Camera {
             pos: Vec3::new(),
             viewDir: Vec3::new(),
@@ -61,9 +64,14 @@ impl Scene {
     }
 }
 
-#[test]
-fn can_init_scene() {
-    let scene = Scene::new();
-    assert!(scene.lights.len() == 0);
-    assert!(scene.shapes.len() == 0);
+#[cfg(test)]
+mod tests {
+    use scene::Scene;
+
+    #[test]
+    fn can_init_scene() {
+        let scene = Scene::new();
+        assert!(scene.lights.len() == 0);
+        assert!(scene.shapes.len() == 0);
+    }
 }

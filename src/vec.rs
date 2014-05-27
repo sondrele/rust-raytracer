@@ -61,11 +61,19 @@ impl Vec3 {
         Vec3{ x: x, y: y, z: z}
     }
 
-    fn length(&self) -> f32 {
+    pub fn length(&self) -> f32 {
         (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
-    fn normalize(&mut self) {
+    pub fn mult(&self, num: f32) -> Vec3 {
+        Vec3{
+            x: self.x * num,
+            y: self.y * num,
+            z: self.z * num,
+        }
+    }
+
+    pub fn normalize(&mut self) {
         let len = self.length();
         if len != 0.0 {
             self.x = self.x / len;
@@ -74,7 +82,7 @@ impl Vec3 {
         }
     }
 
-    fn cross(&self, vec: Vec3) -> Vec3 {
+    pub fn cross(&self, vec: Vec3) -> Vec3 {
         Vec3{
             x: self.y * vec.z - self.z * vec.y,
             y: self.z * vec.x - self.x * vec.z,
@@ -103,57 +111,71 @@ fn vec3_can_be_subtracted(){
     assert_eq!(c.z, 0f32);
 }
 
-#[test]
-fn vec3_can_be_multiplied(){
-    let a = Vec3{x: 0f32, y: 1f32, z: 2f32};
-    let b = Vec3{x: 0f32, y: 1f32, z: 2f32};
-    let c = a * b;
-    assert_eq!(c.x, 0f32);
-    assert_eq!(c.y, 1f32);
-    assert_eq!(c.z, 4f32);
-}
+#[cfg(test)]
+mod tests {
+    use vec::Vec3;
+    
+    #[test]
+    fn vec3_can_be_multiplied(){
+        let a = Vec3{x: 0f32, y: 1f32, z: 2f32};
+        let b = Vec3{x: 0f32, y: 1f32, z: 2f32};
+        let c = a * b;
+        assert_eq!(c.x, 0f32);
+        assert_eq!(c.y, 1f32);
+        assert_eq!(c.z, 4f32);
+    }
 
-#[test]
-fn vec3_can_be_equal(){
-    let a = Vec3{x: 1.2, y: 2.2, z: 3.2};
-    let b = Vec3{x: 1.2, y: 2.2, z: 3.2};
+    #[test]
+    fn vec3_can_be_multiplied_with_f32(){
+        let a = Vec3{x: 0f32, y: 1f32, z: 2f32};
+        let c = a.mult(2.0);
+        assert_eq!(c.x, 0.0);
+        assert_eq!(c.y, 2.0);
+        assert_eq!(c.z, 4.0);
+    }
 
-    assert_eq!(a.x, b.x);
-    assert_eq!(a.y, b.y);
-    assert_eq!(a.z, b.z);
-}
+    #[test]
+    fn vec3_can_be_equal(){
+        let a = Vec3{x: 1.2, y: 2.2, z: 3.2};
+        let b = Vec3{x: 1.2, y: 2.2, z: 3.2};
 
-#[test]
-fn vec3_has_length(){
-    let a = Vec3{x: 1.2, y: 2.2, z: 3.2};
-    let x = a.length();
-    assert!(x-4.06448 > 0.0);
-    assert!(x-4.06449 < 0.0);
-}
+        assert_eq!(a.x, b.x);
+        assert_eq!(a.y, b.y);
+        assert_eq!(a.z, b.z);
+    }
 
-#[test]
-fn vec3_can_be_normalized(){
-    let mut v = Vec3::init(3.0, 4.0, 5.0);
-    v.normalize();
-    assert!(v.x-0.424264 > 0.0);
-    assert!(v.x-0.424265 < 0.0);
-}
+    #[test]
+    fn vec3_has_length(){
+        let a = Vec3{x: 1.2, y: 2.2, z: 3.2};
+        let x = a.length();
+        assert!(x-4.06448 > 0.0);
+        assert!(x-4.06449 < 0.0);
+    }
 
-#[test]
-fn vec3_has_crossproduct(){
-    let x = Vec3::init(1.0, 2.0, 3.0);
-    let y = Vec3::init(3.0, 4.0, 5.0);
+    #[test]
+    fn vec3_can_be_normalized(){
+        let mut v = Vec3::init(3.0, 4.0, 5.0);
+        v.normalize();
+        assert!(v.x-0.424264 > 0.0);
+        assert!(v.x-0.424265 < 0.0);
+    }
 
-    let z = x.cross(y);
-    assert_eq!(z.x, -2.0);
-    assert_eq!(z.y, 4.0);
-    assert_eq!(z.z, -2.0);
-}
+    #[test]
+    fn vec3_has_crossproduct(){
+        let x = Vec3::init(1.0, 2.0, 3.0);
+        let y = Vec3::init(3.0, 4.0, 5.0);
 
-#[test]
-fn vec3_can_be_indexed(){
-    let x = Vec3::init(1.0, 2.0, 3.0);
-    assert_eq!(x[0], 1.0);
-    assert_eq!(x[1], 2.0);
-    assert_eq!(x[2], 3.0);
+        let z = x.cross(y);
+        assert_eq!(z.x, -2.0);
+        assert_eq!(z.y, 4.0);
+        assert_eq!(z.z, -2.0);
+    }
+
+    #[test]
+    fn vec3_can_be_indexed(){
+        let x = Vec3::init(1.0, 2.0, 3.0);
+        assert_eq!(x[0], 1.0);
+        assert_eq!(x[1], 2.0);
+        assert_eq!(x[2], 3.0);
+    }
 }

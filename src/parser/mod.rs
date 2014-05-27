@@ -1,9 +1,9 @@
 use std::io;
 use std::io::{ BufferedReader, File };
 use vec::Vec3;
-use material::{ Material, Color };
-use shapes::{ PolySetType, SphereType, Sphere, PolySet, Poly, Vertex };
 use scene::{ Scene, Camera, Light, PointLight, DirectionalLight, AreaLight };
+use scene::material::{ Material, Color };
+use scene::shapes::{ PolySetType, SphereType, Sphere, PolySet, Poly, Vertex };
 
 struct SceneParser {
     reader: BufferedReader<File>,
@@ -219,7 +219,7 @@ impl SceneParser {
             vertexNormal: false
         };
         self.check_and_consume("}");
-        poly
+        poly 
     }
 
     fn parse_polygon_set(&mut self) -> PolySet {
@@ -274,7 +274,7 @@ impl SceneParser {
         camera
     }
 
-    fn parse_scene(&mut self) -> Scene {
+    pub fn parse_scene(&mut self) -> Scene {
         self.check_and_consume("Composer");
         self.check_and_consume("format");
         self.check_and_consume("2.1");
@@ -304,10 +304,10 @@ impl SceneParser {
 }
 
 #[cfg(test)]
-mod tests {
-    use parser::SceneParser;
+mod test_parser {
     use vec::Vec3;
-    use material::Color;
+    use parser::SceneParser;
+    use scene::material::Color;
     use scene::{ Light, PointLight, DirectionalLight, AreaLight };
 
     static path : &'static str   = "src/parser/test/testdata-";

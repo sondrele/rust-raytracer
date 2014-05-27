@@ -81,37 +81,40 @@ impl Material {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use scene::material::{ Color, Material };
+    #[test]
+    fn Color_is_0(){
+        let c = Color::new();
 
-#[test]
-fn Color_is_0(){
-    let c = Color::new();
+        assert!(c.r == 0.0);
+        assert!(c.g == 0.0);
+        assert!(c.b == 0.0);
+    }
 
-    assert!(c.r == 0.0);
-    assert!(c.g == 0.0);
-    assert!(c.b == 0.0);
-}
+    #[test]
+    fn Color_is_between_0_and_1(){
+        let mut c = Color::new();
+        c.R(2.0);
+        c.G(0.5);
+        c.B(-1.0);
+        assert!(c.r == 1.0);
+        assert!(c.g == 0.5);
+        assert!(c.b == 0.0);
+    }
 
-#[test]
-fn Color_is_between_0_and_1(){
-    let mut c = Color::new();
-    c.R(2.0);
-    c.G(0.5);
-    c.B(-1.0);
-    assert!(c.r == 1.0);
-    assert!(c.g == 0.5);
-    assert!(c.b == 0.0);
-}
+    #[test]
+    fn Material_is_reflective(){
+        let mut mat = Material::new();
+        mat.specular.R(0.5);
+        assert!(mat.is_reflective());
+    }
 
-#[test]
-fn Material_is_reflective(){
-    let mut mat = Material::new();
-    mat.specular.R(0.5);
-    assert!(mat.is_reflective());
-}
-
-#[test]
-fn Material_is_refractive(){
-    let mut mat = Material::new();
-    mat.transparency = 0.5;
-    assert!(mat.is_refractive());
+    #[test]
+    fn Material_is_refractive(){
+        let mut mat = Material::new();
+        mat.transparency = 0.5;
+        assert!(mat.is_refractive());
+    }
 }
