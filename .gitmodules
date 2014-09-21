@@ -1,0 +1,3 @@
+[submodule "lib/bmp"]
+	path = lib/bmp
+	url = https://github.com/sondrele/rust-bmp.git
