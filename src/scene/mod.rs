@@ -8,7 +8,7 @@ pub mod shapes;
 // Is it possible to mplement traits instead of using enums,
 // make the fields private data and call trait methods
 // according to the different types of lights?
-#[deriving(Eq, Clone, Show)]
+#[deriving(PartialEq, Clone, Show)]
 pub enum LightType {
     PointLight,
     AreaLight,

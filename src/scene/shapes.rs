@@ -34,11 +34,11 @@ impl Vertex {
 }
 
 impl Index<u32, f32> for Vertex {
-    fn index(&self, index: &u32) -> f32 {
+    fn index<'a>(&'a self, index: &u32) -> &'a f32 {
         match index {
-            &0 => self.position[0],
-            &1 => self.position[1],
-            &2 => self.position[2],
+            &0 => &self.position[0],
+            &1 => &self.position[1],
+            &2 => &self.position[2],
             _ => fail!("Index out of bound: {}", index)
         }
     }
@@ -67,11 +67,11 @@ impl Poly {
 }
 
 impl Index<u32, Vertex> for Poly {
-    fn index(&self, index: &u32) -> Vertex {
+    fn index<'a>(&'a self, index: &u32) -> &'a Vertex {
         match index {
-            &0 => self.vertices[0],
-            &1 => self.vertices[1],
-            &2 => self.vertices[2],
+            &0 => &self.vertices[0],
+            &1 => &self.vertices[1],
+            &2 => &self.vertices[2],
             _ => fail!("Index out of bound: {}", index)
         }
     }

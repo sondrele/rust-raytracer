@@ -5,7 +5,7 @@ pub struct Vec3 {
     pub z: f32
 }
 
-impl Eq for Vec3 {
+impl PartialEq for Vec3 {
     fn eq(&self, vec: &Vec3) -> bool {
         self.x == vec.x && self.y == vec.y && self.z == vec.z
     }
@@ -42,12 +42,12 @@ impl Mul<Vec3, Vec3> for Vec3 {
 }
 
 impl Index<u32, f32> for Vec3 {
-    fn index(&self, index: &u32) -> f32 {
+    fn index<'a>(&'a self, index: &u32) -> &'a f32 {
         match index {
-            &0 => self.x,
-            &1 => self.y,
-            &2 => self.z,
-            _ => fail!("Index out of bound: {}", index)
+            &0 => &self.x,
+            &1 => &self.y,
+            &2 => &self.z,
+            _ => fail!("Index out of bounds: {}", index)
         }
     }
 }
@@ -114,7 +114,7 @@ fn vec3_can_be_subtracted(){
 #[cfg(test)]
 mod tests {
     use vec::Vec3;
-    
+
     #[test]
     fn vec3_can_be_multiplied(){
         let a = Vec3{x: 0f32, y: 1f32, z: 2f32};
