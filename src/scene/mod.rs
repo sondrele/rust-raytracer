@@ -30,20 +30,20 @@ impl Light {
 
 pub struct Camera {
     pub pos: Vec3,
-    pub viewDir: Vec3,
-    pub focalDist: f32,
-    pub orthoUp: Vec3,
-    pub verticalFOV: f32
+    pub view_dir: Vec3,
+    pub focal_dist: f32,
+    pub ortho_up: Vec3,
+    pub vertical_fov: f32
 }
 
 impl Camera {
     pub fn new() -> Camera {
         Camera {
             pos: Vec3::new(),
-            viewDir: Vec3::new(),
-            focalDist: 0.0,
-            orthoUp: Vec3::new(),
-            verticalFOV: 0.0
+            view_dir: Vec3::new(),
+            focal_dist: 0.0,
+            ortho_up: Vec3::new(),
+            vertical_fov: 0.0
         }
     }
 }

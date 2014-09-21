@@ -9,7 +9,7 @@ struct SceneParser {
     reader: BufferedReader<File>,
     finished: bool,
     peaked: bool,
-    lastToken: Option<String>
+    last_token: Option<String>
 }
 
 impl SceneParser {
@@ -18,7 +18,7 @@ impl SceneParser {
             reader: SceneParser::read_file(scene),
             finished: false,
             peaked: false,
-            lastToken: None
+            last_token: None
         }
     }
 
@@ -35,25 +35,25 @@ impl SceneParser {
 
     fn peak(&mut self) -> String {
         if self.peaked {
-            match self.lastToken {
+            match self.last_token {
                 Some(ref tkn) => { return tkn.clone(); },
                 None => fail!("The peaked word does not exist")
             }
         }
         let tkn = self.next_token();
-        self.lastToken = Some(tkn.clone());
+        self.last_token = Some(tkn.clone());
         self.peaked = true;
         return tkn;
     }
 
     fn next_token(&mut self) -> String {
         if self.peaked {
-            // let tkn = self.lastToken.unwrap(); <- Hva er denne feilmeldingen?
-            let tkn = match self.lastToken {
+            // let tkn = self.last_token.unwrap(); <- Hva er denne feilmeldingen?
+            let tkn = match self.last_token {
                 Some(ref tkn) => tkn.clone(),
                 None => fail!("The peaked word does not exist")
             };
-            self.lastToken = None;
+            self.last_token = None;
             self.peaked = false;
             return tkn;
         }
@@ -64,7 +64,7 @@ impl SceneParser {
                 Err(e) => match e.kind {
                     io::EndOfFile => {
                         self.finished = true;
-                        return buf.as_slice().to_owned();
+                        return buf.as_slice().to_string();
                     },
                     _ => fail!("Read error: {}", e)
                 }
@@ -72,7 +72,7 @@ impl SceneParser {
             if !c.is_whitespace() {
                 buf.push_char(c);
             } else if buf.len() > 0 {
-                return buf.as_slice().to_owned();
+                return buf.as_slice().to_string();
             }
         }
     }
@@ -99,7 +99,7 @@ impl SceneParser {
 
     fn check_and_consume(&mut self, token: &'static str) {
         // TODO: Give a nicer error message than this assert?
-        assert_eq!(self.next_token(), token.to_owned())
+        assert_eq!(self.next_token(), token.to_string())
     }
 
     fn parse_f32(&mut self, name: &'static str) -> f32 {
@@ -120,11 +120,11 @@ impl SceneParser {
     fn parse_light(&mut self) -> Light {
         let keyword = self.next_token();
 
-        let kind = if keyword == "point_light".to_owned() {
+        let kind = if keyword == "point_light".to_string() {
             PointLight
-        } else if keyword == "area_light".to_owned() {
+        } else if keyword == "area_light".to_string() {
             AreaLight
-        } else if keyword == "directional_light".to_owned() {
+        } else if keyword == "directional_light".to_string() {
             DirectionalLight
         } else {
             fail!("LightType is not valid: {}", keyword)
@@ -181,12 +181,12 @@ impl SceneParser {
         self.consume_next();
         self.check_and_consume("numMaterials");
 
-        let mut numMaterials = self.next_i32();
+        let mut num_materials = self.next_i32();
         let mut sphere = Sphere::new();
-        while numMaterials > 0 {
+        while num_materials > 0 {
             let material = self.parse_material();
             sphere.materials.push(material);
-            numMaterials -= 1;
+            num_materials -= 1;
         }
 
         sphere.origin = self.parse_vec3("origin");
@@ -215,8 +215,8 @@ impl SceneParser {
                 Vertex::init(self.parse_vec3("pos")),
                 Vertex::init(self.parse_vec3("pos"))
             ],
-            vertexMaterial: false,
-            vertexNormal: false
+            vertex_material: false,
+            vertex_normal: false
         };
         self.check_and_consume("}");
         poly
@@ -230,11 +230,11 @@ impl SceneParser {
         self.check_and_consume("numMaterials");
 
         let mut polyset = PolySet::new();
-        let mut numMaterials = self.next_i32();
-        while numMaterials > 0 {
+        let mut num_materials = self.next_i32();
+        while num_materials > 0 {
             let material = self.parse_material();
             polyset.materials.push(material);
-            numMaterials -= 1;
+            num_materials -= 1;
         }
 
         self.check_and_consume("type");
@@ -249,11 +249,11 @@ impl SceneParser {
         self.consume_next(); // TODO: This field is probably never used
         self.check_and_consume("numPolys");
 
-        let mut numPolys = self.next_i32();
-        while numPolys > 0 {
+        let mut num_polys = self.next_i32();
+        while num_polys > 0 {
             let poly = self.parse_polygon();
             polyset.polygons.push(poly);
-            numPolys -= 1;
+            num_polys -= 1;
         }
 
         self.check_and_consume("}");
@@ -265,10 +265,10 @@ impl SceneParser {
         self.check_and_consume("{");
         let camera = Camera {
             pos: self.parse_vec3("position"),
-            viewDir: self.parse_vec3("viewDirection"),
-            focalDist: self.parse_f32("focalDistance"),
-            orthoUp: self.parse_vec3("orthoUp"),
-            verticalFOV: self.parse_f32("verticalFOV")
+            view_dir: self.parse_vec3("viewDirection"),
+            focal_dist: self.parse_f32("focalDistance"),
+            ortho_up: self.parse_vec3("orthoUp"),
+            vertical_fov: self.parse_f32("verticalFOV")
         };
         self.check_and_consume("}");
         camera
@@ -284,14 +284,14 @@ impl SceneParser {
 
         let mut tkn = self.peak();
         while self.has_next_token() {
-            if tkn == "camera".to_owned() {
+            if tkn == "camera".to_string() {
                 scene.camera = self.parse_camera();
             } else if tkn.as_slice().ends_with("light") {
                 scene.lights.push(self.parse_light());
-            } else if tkn == "sphere".to_owned() {
+            } else if tkn == "sphere".to_string() {
                 let sphere = self.parse_sphere();
                 scene.shapes.push(SphereType(sphere));
-            } else if tkn == "poly_set".to_owned() {
+            } else if tkn == "poly_set".to_string() {
                 let polyset = self.parse_polygon_set();
                 scene.shapes.push(PolySetType(polyset));
             } else {
@@ -313,7 +313,7 @@ mod test_parser {
     static path : &'static str   = "src/parser/test/testdata-";
 
     fn scene_parser(name: &'static str) -> SceneParser {
-        let name = path.to_owned()
+        let name = path.to_string()
             .append(name)
             .append(".txt");
         SceneParser::new(name)
@@ -324,22 +324,22 @@ mod test_parser {
         let mut parser = scene_parser("light");
 
         let fst = parser.next_token();
-        assert_eq!("point_light".to_owned(), fst);
+        assert_eq!("point_light".to_string(), fst);
 
         let snd = parser.next_token();
-        assert_eq!("{".to_owned(), snd);
+        assert_eq!("{".to_string(), snd);
 
         let thrd = parser.next_token();
-        assert_eq!("position".to_owned(), thrd);
+        assert_eq!("position".to_string(), thrd);
 
         let frth = parser.next_token();
-        assert_eq!("-1".to_owned(), frth);
+        assert_eq!("-1".to_string(), frth);
 
-        let mut tkn = "".to_owned();
+        let mut tkn = "".to_string();
         while parser.has_next_token() {
             tkn = parser.next_token();
         }
-        assert_eq!("}".to_owned(), tkn);
+        assert_eq!("}".to_string(), tkn);
     }
 
     #[test]
@@ -347,19 +347,19 @@ mod test_parser {
         let mut parser = scene_parser("light");
 
         let tkn = parser.next_token();
-        assert_eq!("point_light".to_owned(), tkn);
+        assert_eq!("point_light".to_string(), tkn);
 
         let tkn = parser.peak();
-        assert_eq!("{".to_owned(), tkn);
+        assert_eq!("{".to_string(), tkn);
 
         let tkn = parser.peak();
-        assert_eq!("{".to_owned(), tkn);
+        assert_eq!("{".to_string(), tkn);
 
         let tkn = parser.next_token();
-        assert_eq!("{".to_owned(), tkn);
+        assert_eq!("{".to_string(), tkn);
 
         let tkn = parser.next_token();
-        assert_eq!("position".to_owned(), tkn);
+        assert_eq!("position".to_string(), tkn);
     }
 
     #[test]
@@ -385,9 +385,9 @@ mod test_parser {
     fn can_parse_color() {
         let mut parser = scene_parser("color");
         let color: Color = parser.parse_color("color");
-        assert_eq!(1.0, color.Rval());
-        assert_eq!(0.0, color.Gval());
-        assert_eq!(0.5, color.Bval());
+        assert_eq!(1.0, color.r_val());
+        assert_eq!(0.0, color.g_val());
+        assert_eq!(0.5, color.b_val());
     }
 
     #[test]
@@ -396,26 +396,26 @@ mod test_parser {
         let p_light: Light = parser.parse_light();
         assert_eq!(p_light.kind, PointLight);
         assert_eq!(p_light.pos.x, -1.0);
-        assert_eq!(p_light.intensity.Rval(), 1.0);
+        assert_eq!(p_light.intensity.r_val(), 1.0);
 
         let a_light = parser.parse_light();
         assert_eq!(a_light.kind, AreaLight);
         assert_eq!(a_light.pos.x, 0.0);
         assert_eq!(a_light.dir.x, 200.0);
-        assert_eq!(a_light.intensity.Rval(), 0.0);
+        assert_eq!(a_light.intensity.r_val(), 0.0);
 
         let d_light = parser.parse_light();
         assert_eq!(d_light.kind, DirectionalLight);
         assert_eq!(d_light.dir.x, 0.5);
-        assert_eq!(d_light.intensity.Rval(), 0.5);
+        assert_eq!(d_light.intensity.r_val(), 0.5);
     }
 
     #[test]
     fn can_parse_material() {
         let mut parser = scene_parser("material");
         let material = parser.parse_material();
-        assert_eq!(material.diffuse.Rval(), 0.56);
-        assert_eq!(material.ambient.Rval(), 0.2);
+        assert_eq!(material.diffuse.r_val(), 0.56);
+        assert_eq!(material.ambient.r_val(), 0.2);
         assert_eq!(material.shininess, 0.2);
         assert_eq!(material.transparency, 0.5);
     }
@@ -451,10 +451,10 @@ mod test_parser {
         let mut parser = scene_parser("camera");
         let camera = parser.parse_camera();
         assert_eq!(camera.pos[0], 1.0);
-        assert_eq!(camera.viewDir[0], -1.0);
-        assert_eq!(camera.focalDist, 12.0);
-        assert_eq!(camera.orthoUp[0], 2.0);
-        assert_eq!(camera.verticalFOV, 0.5);
+        assert_eq!(camera.view_dir[0], -1.0);
+        assert_eq!(camera.focal_dist, 12.0);
+        assert_eq!(camera.ortho_up[0], 2.0);
+        assert_eq!(camera.vertical_fov, 0.5);
     }
 
     #[test]

@@ -14,11 +14,11 @@ pub struct RayTracer {
     height: uint,
     depth: uint,
     center: Vec3,
-    cameraPos: Vec3,
-    parallelUp: Vec3,
-    parallelRight: Vec3,
-    verticalFOV: f32,
-    horizontalFOV: f32,
+    camera_pos: Vec3,
+    parallel_up: Vec3,
+    parallel_right: Vec3,
+    vertical_fov: f32,
+    horizontal_fov: f32,
     scene: Option<Scene>
 }
 
@@ -29,11 +29,11 @@ impl RayTracer {
             height: 0,
             depth: 0,
             center: Vec3::new(),
-            cameraPos: Vec3::new(),
-            parallelUp: Vec3::new(),
-            parallelRight: Vec3::new(),
-            verticalFOV: 0.0,
-            horizontalFOV: 0.0,
+            camera_pos: Vec3::new(),
+            parallel_up: Vec3::new(),
+            parallel_right: Vec3::new(),
+            vertical_fov: 0.0,
+            horizontal_fov: 0.0,
             scene: None
         }
     }
@@ -44,11 +44,11 @@ impl RayTracer {
             height: height,
             depth: depth,
             center: Vec3::new(),
-            cameraPos: Vec3::new(),
-            parallelUp: Vec3::new(),
-            parallelRight: Vec3::new(),
-            verticalFOV: 0.0,
-            horizontalFOV: 0.0,
+            camera_pos: Vec3::new(),
+            parallel_up: Vec3::new(),
+            parallel_right: Vec3::new(),
+            vertical_fov: 0.0,
+            horizontal_fov: 0.0,
             scene: None
         }
     }
@@ -64,20 +64,20 @@ impl RayTracer {
             None => fail!("RayTracer has not been assigned any Scene")
         };
 
-        self.parallelRight = cam.viewDir.cross(cam.orthoUp);
-        self.parallelUp = self.parallelRight.cross(cam.viewDir);
-        self.parallelRight.normalize();
-        self.parallelUp.normalize();
+        self.parallel_right = cam.view_dir.cross(cam.ortho_up);
+        self.parallel_up = self.parallel_right.cross(cam.view_dir);
+        self.parallel_right.normalize();
+        self.parallel_up.normalize();
 
-        self.verticalFOV = cam.verticalFOV;
-        self.horizontalFOV = cam.verticalFOV * (self.width as f32 / self.height as f32);
-        self.cameraPos = cam.pos;
-        self.center = cam.pos + cam.viewDir.mult(SCALE);
+        self.vertical_fov = cam.vertical_fov;
+        self.horizontal_fov = cam.vertical_fov * (self.width as f32 / self.height as f32);
+        self.camera_pos = cam.pos;
+        self.center = cam.pos + cam.view_dir.mult(SCALE);
     }
 
     // fn get_verticalFOV(&self) -> f32 {
     //     match self.scene {
-    //         Some(ref scene) => scene.camera.verticalFOV,
+    //         Some(ref scene) => scene.camera.vertical_fov,
     //         None => fail!("RayTracer has not been assigned any Scene")
     //     }
     // }
@@ -87,13 +87,13 @@ impl RayTracer {
     // }
 
     fn vertical_plane(&self) -> Vec3 {
-        let f = (self.verticalFOV / 2.0).tan() * SCALE;
-        self.parallelUp.mult(f)
+        let f = (self.vertical_fov / 2.0).tan() * SCALE;
+        self.parallel_up.mult(f)
     }
 
     fn horizontal_plane(&self) -> Vec3 {
-        let f = (self.horizontalFOV / 2.0).tan() * SCALE;
-        self.parallelRight.mult(f)
+        let f = (self.horizontal_fov / 2.0).tan() * SCALE;
+        self.parallel_right.mult(f)
     }
 
     fn compute_ray(&self, x: f32, y: f32) -> Ray {
@@ -102,7 +102,7 @@ impl RayTracer {
         let dy = self.vertical_plane().mult(2.0 * y - 1.0);
         let mut dir = self.center + dx + dy;
         dir.normalize();
-        Ray::init(self.cameraPos, dir)
+        Ray::init(self.camera_pos, dir)
     }
 
 }
@@ -116,10 +116,10 @@ mod tests {
     fn get_raytraer() -> RayTracer {
         let mut scene = Scene::new();
         scene.camera = Camera::new();
-        scene.camera.viewDir = Vec3::init(0.0, 0.0, -1.0);
-        scene.camera.orthoUp = Vec3::init(0.0, 1.0, 0.0);
+        scene.camera.view_dir = Vec3::init(0.0, 0.0, -1.0);
+        scene.camera.ortho_up = Vec3::init(0.0, 1.0, 0.0);
         let pi: f32 = Float::pi();
-        scene.camera.verticalFOV = pi / 2.0;
+        scene.camera.vertical_fov = pi / 2.0;
         let mut rt = RayTracer::init(2, 2, 2);
         rt.set_scene(scene);
         rt

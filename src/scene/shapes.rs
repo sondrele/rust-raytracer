@@ -7,8 +7,8 @@ pub enum Shape {
 }
 
 pub struct Vertex {
-    pub matIndex: u32,
-    pub hasNormal: bool,
+    pub mat_index: u32,
+    pub has_normal: bool,
     pub position: Vec3,
     pub normal: Vec3
 }
@@ -16,8 +16,8 @@ pub struct Vertex {
 impl Vertex {
     pub fn new() -> Vertex {
         Vertex {
-            matIndex: 0,
-            hasNormal: false,
+            mat_index: 0,
+            has_normal: false,
             position: Vec3::new(),
             normal: Vec3::new()
         }
@@ -25,8 +25,8 @@ impl Vertex {
 
     pub fn init(position: Vec3) -> Vertex {
         Vertex {
-            matIndex: 0,
-            hasNormal: false,
+            mat_index: 0,
+            has_normal: false,
             position: position,
             normal: Vec3::new()
         }
@@ -47,8 +47,8 @@ impl Index<u32, f32> for Vertex {
 pub struct Poly {
     pub materials: Vec<Material>,
     pub vertices: [Vertex, ..3],
-    pub vertexMaterial: bool,
-    pub vertexNormal: bool
+    pub vertex_material: bool,
+    pub vertex_normal: bool
 }
 
 impl Poly {
@@ -60,8 +60,8 @@ impl Poly {
                 Vertex::new(),
                 Vertex::new()
             ],
-            vertexMaterial: false,
-            vertexNormal: false
+            vertex_material: false,
+            vertex_normal: false
         }
     }
 }
@@ -126,13 +126,13 @@ mod tests {
     #[test]
     fn can_init_vertex() {
         let v = Vertex::new();
-        assert_eq!(v.matIndex, 0);
+        assert_eq!(v.mat_index, 0);
     }
 
     #[test]
     fn can_init_polygon() {
         let p = Poly::new();
-        assert_eq!(p.vertexMaterial, false);
+        assert_eq!(p.vertex_material, false);
     }
 
     #[test]
