@@ -5,14 +5,18 @@ MAIN = main.rs
 EXEC = $(MAIN:.rs=)
 TEXEC = $(LIB:.rs=)
 
-$(MAIN): lib
-	$(RC) $@ -L .
+.PHONY: libs main test clean
 
-lib: $(LIB)
-	$(RC) --crate-type=lib $^
+main: libs
+	$(RC) -L . main.rs -o main
+
+libs:
+	$(RC) -L . --crate-type=lib lib/bmp/src/bmp.rs
+	$(RC) -L . --crate-type=lib $(LIB)
+	@echo "Crates compiled"
 
 test:
-	$(RC) $(LIB) --test -o $(TEXEC)
+	$(RC) $(LIB) --test -L . -o $(TEXEC)
 	./$(TEXEC)
 
 clean:

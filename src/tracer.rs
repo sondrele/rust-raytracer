@@ -1,6 +1,12 @@
-use scene::{ Scene };
+extern crate bmp;
+
+use scene::Scene;
+use scene::shapes::{Intersected, Missed};
 use vec::Vec3;
 use ray::Ray;
+
+use bmp::BMPimage;
+use bmp::WHITE;
 
 pub mod vec;
 pub mod ray;
@@ -103,6 +109,26 @@ impl RayTracer {
         let mut dir = self.center + dx + dy;
         dir.normalize();
         Ray::init(self.camera_pos, dir)
+    }
+
+    pub fn trace_rays(&self) -> BMPimage {
+        match self.scene {
+            Some(ref scene) => {
+                let mut img = BMPimage::new(500, 500);
+
+                for y in range(0, 500) {
+                    for x in range(0, 500) {
+                        let ray = self.compute_ray(x as f32, y as f32);
+                        match scene.intersects(ray) {
+                            Intersected(_) => img.set_pixel(x, y, WHITE),
+                            Missed => ()
+                        }
+                    }
+                }
+                img
+            },
+            None => fail!("RayTracer has not been assigned any Scene")
+        }
     }
 
 }
