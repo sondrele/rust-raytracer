@@ -9,20 +9,20 @@ struct SceneParser {
     reader: BufferedReader<File>,
     finished: bool,
     peaked: bool,
-    lastToken: Option<~str>
+    lastToken: Option<String>
 }
 
 impl SceneParser {
-    pub fn new(scene: ~str) -> SceneParser {
+    pub fn new(scene: String) -> SceneParser {
         SceneParser{
             reader: SceneParser::read_file(scene),
             finished: false,
             peaked: false,
             lastToken: None
-        }   
+        }
     }
 
-    fn read_file(path: ~str) -> BufferedReader<File> {
+    fn read_file(path: String) -> BufferedReader<File> {
         match File::open(&Path::new(path.clone())) {
             Ok(f) => BufferedReader::new(f),
             Err(e) => fail!("file error: {}, path: {}", e, path.clone())
@@ -33,7 +33,7 @@ impl SceneParser {
         !self.finished
     }
 
-    fn peak(&mut self) -> ~str {
+    fn peak(&mut self) -> String {
         if self.peaked {
             match self.lastToken {
                 Some(ref tkn) => { return tkn.clone(); },
@@ -46,7 +46,7 @@ impl SceneParser {
         return tkn;
     }
 
-    fn next_token(&mut self) -> ~str {
+    fn next_token(&mut self) -> String {
         if self.peaked {
             // let tkn = self.lastToken.unwrap(); <- Hva er denne feilmeldingen?
             let tkn = match self.lastToken {
@@ -57,7 +57,7 @@ impl SceneParser {
             self.peaked = false;
             return tkn;
         }
-        let mut buf = StrBuf::new();
+        let mut buf = String::new();
         loop {
             let c = match self.reader.read_byte() {
                 Ok(c) => c as char,
@@ -79,7 +79,7 @@ impl SceneParser {
 
     fn next_f32(&mut self) -> f32 {
         let tkn = self.next_token();
-        match from_str::<f32>(tkn) {
+        match from_str::<f32>(tkn.as_slice()) {
             Some(f) => f,
             None => fail!("Token '{}' can not be parsed as f32", tkn)
         }
@@ -87,7 +87,7 @@ impl SceneParser {
 
     fn next_i32(&mut self) -> i32 {
         let tkn = self.next_token();
-        match from_str::<i32>(tkn) {
+        match from_str::<i32>(tkn.as_slice()) {
             Some(f) => f,
             None => fail!("Token '{}' can not be parsed as i32", tkn)
         }
@@ -119,7 +119,7 @@ impl SceneParser {
 
     fn parse_light(&mut self) -> Light {
         let keyword = self.next_token();
-        
+
         let kind = if keyword == "point_light".to_owned() {
             PointLight
         } else if keyword == "area_light".to_owned() {
@@ -129,7 +129,7 @@ impl SceneParser {
         } else {
             fail!("LightType is not valid: {}", keyword)
         };
-        
+
         self.check_and_consume("{");
 
         let light = match kind {
@@ -152,7 +152,7 @@ impl SceneParser {
                 intensity: self.parse_color("color")
             }
         };
-        
+
         self.check_and_consume("}");
         light
     }
@@ -160,7 +160,7 @@ impl SceneParser {
     fn parse_material(&mut self) -> Material {
         self.check_and_consume("material");
         self.check_and_consume("{");
-        
+
         let material = Material {
             diffuse: self.parse_color("diffColor"),
             ambient: self.parse_color("ambColor"),
@@ -219,7 +219,7 @@ impl SceneParser {
             vertexNormal: false
         };
         self.check_and_consume("}");
-        poly 
+        poly
     }
 
     fn parse_polygon_set(&mut self) -> PolySet {
@@ -286,7 +286,7 @@ impl SceneParser {
         while self.has_next_token() {
             if tkn == "camera".to_owned() {
                 scene.camera = self.parse_camera();
-            } else if tkn.ends_with("light") {
+            } else if tkn.as_slice().ends_with("light") {
                 scene.lights.push(self.parse_light());
             } else if tkn == "sphere".to_owned() {
                 let sphere = self.parse_sphere();
@@ -322,7 +322,7 @@ mod test_parser {
     #[test]
     fn can_parse_tokens() {
         let mut parser = scene_parser("light");
-        
+
         let fst = parser.next_token();
         assert_eq!("point_light".to_owned(), fst);
 
@@ -331,7 +331,7 @@ mod test_parser {
 
         let thrd = parser.next_token();
         assert_eq!("position".to_owned(), thrd);
-        
+
         let frth = parser.next_token();
         assert_eq!("-1".to_owned(), frth);
 
@@ -345,7 +345,7 @@ mod test_parser {
     #[test]
     fn can_peak_at_next_token() {
         let mut parser = scene_parser("light");
-        
+
         let tkn = parser.next_token();
         assert_eq!("point_light".to_owned(), tkn);
 
@@ -357,7 +357,7 @@ mod test_parser {
 
         let tkn = parser.next_token();
         assert_eq!("{".to_owned(), tkn);
-        
+
         let tkn = parser.next_token();
         assert_eq!("position".to_owned(), tkn);
     }
@@ -407,7 +407,7 @@ mod test_parser {
         let d_light = parser.parse_light();
         assert_eq!(d_light.kind, DirectionalLight);
         assert_eq!(d_light.dir.x, 0.5);
-        assert_eq!(d_light.intensity.Rval(), 0.5);   
+        assert_eq!(d_light.intensity.Rval(), 0.5);
     }
 
     #[test]
