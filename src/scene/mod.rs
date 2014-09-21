@@ -1,6 +1,6 @@
 use vec::Vec3;
 use scene::material::Color;
-use scene::shapes::Shape;
+use scene::shapes::ShapeEnum;
 
 pub mod material;
 pub mod shapes;
@@ -51,7 +51,7 @@ impl Camera {
 pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub shapes: Vec<Shape>
+    pub shapes: Vec<ShapeEnum>
 }
 
 impl Scene {
