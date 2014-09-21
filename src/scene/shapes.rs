@@ -2,19 +2,28 @@ use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
 
-pub enum ShapeEnum {
-    SphereType(Sphere),
-    PolySetType(PolySet)
-}
-
 #[deriving(PartialEq, Show)]
 pub enum Intersection {
     Intersected(f32),
     Missed
 }
 
+pub enum ShapeType {
+    SphereType(Sphere),
+    PolySetType(PolySet)
+}
+
 pub trait Shape {
     fn intersects(&self, ray: Ray) -> Intersection;
+}
+
+impl Shape for ShapeType {
+    fn intersects(&self, ray: Ray) -> Intersection {
+        match self {
+            &SphereType(ref sphere) => sphere.intersects(ray),
+            &PolySetType(ref polyset) => polyset.intersects(ray)
+        }
+    }
 }
 
 pub struct Vertex {
@@ -77,6 +86,12 @@ impl Poly {
     }
 }
 
+impl Shape for Poly {
+    fn intersects(&self, _: Ray) -> Intersection {
+        Intersected(0.0)
+    }
+}
+
 impl Index<u32, Vertex> for Poly {
     fn index<'a>(&'a self, index: &u32) -> &'a Vertex {
         match index {
@@ -99,6 +114,12 @@ impl PolySet {
             materials: Vec::new(),
             polygons: Vec::new()
         }
+    }
+}
+
+impl Shape for PolySet {
+    fn intersects(&self, _: Ray) -> Intersection {
+        Missed
     }
 }
 

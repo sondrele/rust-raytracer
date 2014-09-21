@@ -5,7 +5,7 @@ use scene::{ Scene, Camera, Light, PointLight, DirectionalLight, AreaLight };
 use scene::material::{ Material, Color };
 use scene::shapes::{ PolySetType, SphereType, Sphere, PolySet, Poly, Vertex };
 
-struct SceneParser {
+pub struct SceneParser {
     reader: BufferedReader<File>,
     finished: bool,
     peaked: bool,

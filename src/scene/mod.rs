@@ -1,6 +1,8 @@
 use vec::Vec3;
+use ray::Ray;
 use scene::material::Color;
-use scene::shapes::ShapeEnum;
+use scene::shapes::ShapeType;
+use scene::shapes::{Shape, Intersection, Intersected, Missed};
 
 pub mod material;
 pub mod shapes;
@@ -51,7 +53,7 @@ impl Camera {
 pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub shapes: Vec<ShapeEnum>
+    pub shapes: Vec<ShapeType>
 }
 
 impl Scene {
@@ -61,6 +63,16 @@ impl Scene {
             lights: Vec::new(),
             shapes: Vec::new()
         }
+    }
+
+    pub fn intersects(&self, ray: Ray) -> Intersection {
+        for shape in self.shapes.iter() {
+            match shape.intersects(ray) {
+                Intersected(i) => return Intersected(i),
+                Missed => ()
+            }
+        }
+        Missed
     }
 }
 
