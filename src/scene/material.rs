@@ -61,7 +61,7 @@ impl Color {
     }
 }
 
-#[deriving(Clone)]
+#[deriving(Clone, Show)]
 pub struct Material {
     pub diffuse: Color,
     pub ambient: Color,

@@ -2,7 +2,9 @@ use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
 use scene::shapes::{Shape, Intersection, Intersected, Missed};
+use std::fmt;
 
+#[deriving(Show)]
 pub struct Vertex {
     pub mat_index: u32,
     pub has_normal: bool,
@@ -41,11 +43,22 @@ impl Index<u32, f32> for Vertex {
     }
 }
 
+#[deriving(Show)]
 pub struct Poly {
     pub materials: Vec<Material>,
     pub vertices: [Vertex, ..3],
     pub vertex_material: bool,
     pub vertex_normal: bool
+}
+
+
+impl fmt::Show for [Vertex, ..3] {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // write!(f, "{}", self[0]);
+        // write!(f, "{}", self[1]);
+        // write!(f, "{}", self[2])
+        write!(f, "3")
+    }
 }
 
 impl Poly {
@@ -60,6 +73,12 @@ impl Poly {
             vertex_material: false,
             vertex_normal: false
         }
+    }
+
+    pub fn init() -> Poly {
+        let mut poly = Poly::new();
+        poly.materials = vec!(Material::new());
+        poly
     }
 }
 
@@ -118,7 +137,6 @@ impl Index<u32, Vertex> for Poly {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

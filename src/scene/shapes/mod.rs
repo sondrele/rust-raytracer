@@ -1,4 +1,5 @@
 use ray::Ray;
+use scene::material::Color;
 use scene::shapes::sphere::Sphere;
 use scene::shapes::polyset::PolySet;
 
@@ -9,6 +10,7 @@ pub mod polyset;
 #[deriving(PartialEq, Show)]
 pub enum Intersection {
     Intersected(f32),
+    IntersectedWithColor(f32, Color),
     Missed
 }
 

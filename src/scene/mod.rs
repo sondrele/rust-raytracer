@@ -78,10 +78,10 @@ impl Scene {
     pub fn intersects(&self, ray: Ray) -> SceneIntersection {
         for shape in self.shapes.iter() {
             match shape.intersects(ray) {
-                shapes::Intersected(_) => {
-                    return Intersected(Color::init(1.0, 0.0, 0.0))
+                shapes::IntersectedWithColor(_, color) => {
+                    return Intersected(color)
                 },
-                shapes::Missed => ()
+                _ => () // TODO: Match for per_vertex_color
             }
         }
         Missed
@@ -100,7 +100,7 @@ mod tests {
 
     fn create_scene() -> Scene {
         let mut sphere = Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
-        sphere.materials.push(Material::init(Color::init(1.0, 0.0, 0.0)));
+        sphere.materials.insert(0, Material::init(Color::init(1.0, 0.0, 0.0)));
         let mut scene = Scene::new();
         scene.shapes.push(SphereType(sphere));
         scene
