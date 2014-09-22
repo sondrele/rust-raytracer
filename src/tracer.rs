@@ -1,12 +1,11 @@
 extern crate bmp;
 
 use scene::Scene;
-use scene::shapes::{Intersected, Missed};
+use scene::{Intersected, Missed};
 use vec::Vec3;
 use ray::Ray;
 
 use bmp::BMPimage;
-use bmp::WHITE;
 
 pub mod vec;
 pub mod ray;
@@ -81,17 +80,6 @@ impl RayTracer {
         self.center = cam.pos + cam.view_dir.mult(SCALE);
     }
 
-    // fn get_verticalFOV(&self) -> f32 {
-    //     match self.scene {
-    //         Some(ref scene) => scene.camera.vertical_fov,
-    //         None => fail!("RayTracer has not been assigned any Scene")
-    //     }
-    // }
-
-    // fn get_horizontalFOV(&self) -> f32 {
-    //     self.get_verticalFOV() * (self.width as f32 / self.height as f32)
-    // }
-
     fn vertical_plane(&self) -> Vec3 {
         let f = (self.vertical_fov / 2.0).tan() * SCALE;
         self.parallel_up.mult(f)
@@ -114,13 +102,13 @@ impl RayTracer {
     pub fn trace_rays(&self) -> BMPimage {
         match self.scene {
             Some(ref scene) => {
-                let mut img = BMPimage::new(500, 500);
+                let mut img = BMPimage::new(self.width as i32, self.height as i32);
 
-                for y in range(0, 500) {
-                    for x in range(0, 500) {
+                for y in range(0, self.width as i32) {
+                    for x in range(0, self.height as i32) {
                         let ray = self.compute_ray(x as f32, y as f32);
                         match scene.intersects(ray) {
-                            Intersected(_) => img.set_pixel(x, y, WHITE),
+                            Intersected(c) => img.set_pixel(x as uint, y as uint, c.as_pixel()),
                             Missed => ()
                         }
                     }

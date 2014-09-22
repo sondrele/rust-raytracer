@@ -116,6 +116,9 @@ mod tests {
         let ray = Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0));
         let res = shp.intersects(ray);
 
-        assert_eq!(res, Intersected(4.0));
+        match res {
+            Intersected(point) => assert_eq!(point, 4.0),
+            _ => fail!("Ray did not intersect sphere")
+        }
     }
 }

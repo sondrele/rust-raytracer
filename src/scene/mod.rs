@@ -2,7 +2,7 @@ use vec::Vec3;
 use ray::Ray;
 use scene::material::Color;
 use scene::shapes::ShapeType;
-use scene::shapes::{Shape, Intersection, Intersected, Missed};
+use scene::shapes::Shape;
 
 pub mod material;
 pub mod shapes;
@@ -26,7 +26,12 @@ pub struct Light {
 
 impl Light {
     pub fn new(kind: LightType) -> Light {
-        Light{ kind: kind, pos: Vec3::new(), dir: Vec3::new(), intensity: Color::new() }
+        Light{
+            kind: kind,
+            pos: Vec3::new(),
+            dir: Vec3::new(),
+            intensity: Color::new()
+        }
     }
 }
 
@@ -50,6 +55,11 @@ impl Camera {
     }
 }
 
+pub enum SceneIntersection {
+    Intersected(Color),
+    Missed
+}
+
 pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Light>,
@@ -65,11 +75,13 @@ impl Scene {
         }
     }
 
-    pub fn intersects(&self, ray: Ray) -> Intersection {
+    pub fn intersects(&self, ray: Ray) -> SceneIntersection {
         for shape in self.shapes.iter() {
             match shape.intersects(ray) {
-                Intersected(i) => return Intersected(i),
-                Missed => ()
+                shapes::Intersected(_) => {
+                    return Intersected(Color::init(1.0, 0.0, 0.0))
+                },
+                shapes::Missed => ()
             }
         }
         Missed
@@ -78,12 +90,36 @@ impl Scene {
 
 #[cfg(test)]
 mod tests {
+    use vec::Vec3;
+    use ray::Ray;
     use scene::Scene;
+    use scene::Intersected;
+    use scene::shapes::SphereType;
+    use scene::shapes::sphere::Sphere;
+    use scene::material::{Color, Material};
+
+    fn create_scene() -> Scene {
+        let mut sphere = Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
+        sphere.materials.push(Material::init(Color::init(1.0, 0.0, 0.0)));
+        let mut scene = Scene::new();
+        scene.shapes.push(SphereType(sphere));
+        scene
+    }
 
     #[test]
     fn can_init_scene() {
         let scene = Scene::new();
         assert!(scene.lights.len() == 0);
         assert!(scene.shapes.len() == 0);
+    }
+
+    #[test]
+    fn can_intersect_scene() {
+        let scene = create_scene();
+
+        match scene.intersects(Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))) {
+            Intersected(color) => assert_eq!(Color::init(1.0, 0.0, 0.0), color),
+            _ => fail!("Ray did not intersect scene")
+        }
     }
 }

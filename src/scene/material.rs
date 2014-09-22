@@ -1,4 +1,6 @@
+use bmp::BMPpixel;
 
+#[deriving(PartialEq, Clone, Show)]
 pub struct Color {
     r: f32,
     g: f32,
@@ -49,8 +51,17 @@ impl Color {
     pub fn scalar(&self) -> f32 {
         (self.r * self.r + self.g * self.g + self.b * self.b).sqrt()
     }
+
+    pub fn as_pixel(&self) -> BMPpixel {
+        BMPpixel{
+            r: (self.r * 255.0) as u8,
+            g: (self.g * 255.0) as u8,
+            b: (self.b * 255.0) as u8
+        }
+    }
 }
 
+#[deriving(Clone)]
 pub struct Material {
     pub diffuse: Color,
     pub ambient: Color,
@@ -72,11 +83,22 @@ impl Material {
         }
     }
 
-    fn is_reflective(&self) -> bool {
+    pub fn init(diffuse: Color) -> Material {
+        Material{
+            diffuse: diffuse,
+            ambient: Color::new(),
+            specular: Color::new(),
+            emissive: Color::new(),
+            shininess: 0.0,
+            transparency: 0.0
+        }
+    }
+
+    pub fn is_reflective(&self) -> bool {
         self.specular.scalar() > 0.0
     }
 
-    fn is_refractive(&self) -> bool {
+    pub fn is_refractive(&self) -> bool {
         self.transparency > 0.0
     }
 }
