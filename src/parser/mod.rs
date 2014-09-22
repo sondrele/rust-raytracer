@@ -3,8 +3,10 @@ use std::io::{BufferedReader, File};
 use vec::Vec3;
 use scene::{Scene, Camera, Light, PointLight, DirectionalLight, AreaLight};
 use scene::material::{ Material, Color };
-use scene::shapes::{PolySetType, SphereType, PolySet, Poly, Vertex};
+use scene::shapes::{PolySetType, SphereType};
 use scene::shapes::sphere::Sphere;
+use scene::shapes::polyset::PolySet;
+use scene::shapes::poly::{Poly, Vertex};
 
 pub struct SceneParser {
     reader: BufferedReader<File>,
