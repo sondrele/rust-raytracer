@@ -87,8 +87,47 @@ impl Poly {
 }
 
 impl Shape for Poly {
-    fn intersects(&self, _: Ray) -> Intersection {
-        Intersected(0.0)
+    fn intersects(&self, ray: Ray) -> Intersection {
+        let p: Vec3 = ray.ori;
+        let d: Vec3 = ray.dir;
+        let v0: Vec3 = self.vertices[0].position;
+        let v1: Vec3 = self.vertices[1].position;
+        let v2: Vec3 = self.vertices[2].position;
+
+        let e1: Vec3 = v1 - v0;
+        let e2: Vec3 = v2 - v0;
+
+        let h: Vec3 = d.cross(e2);
+        let a0: f32 = e1.dot(h);
+
+        if a0 > -0.0000001 && a0 < 0.0000001 {
+            return Missed;
+        }
+
+        let f: f32 = 1.0 / a0;
+        let s: Vec3 = p - v0;
+        let u: f32 = f * s.dot(h);
+
+        if u < 0.0 || u > 1.0 {
+            return Missed;
+        }
+
+        let q: Vec3 = s.cross(e1);
+        let v: f32 = f * d.dot(q);
+
+        if v < 0.0 || u + v > 1.0 {
+            return Missed;
+        }
+
+        // at this stage we can compute t to find out where
+        // the intersection point is on the line
+        let t: f32 = f * e2.dot(q);
+
+        match t > 0.0000001 {
+            true => Intersected(t), // ray intersection
+            false => Missed         // this means that there is a line intersection
+                                    // but not a ray intersection
+        }
     }
 }
 
@@ -118,8 +157,23 @@ impl PolySet {
 }
 
 impl Shape for PolySet {
-    fn intersects(&self, _: Ray) -> Intersection {
-        Missed
+    fn intersects(&self, ray: Ray) -> Intersection {
+        let mut intersection = Missed;
+
+        for p in self.polygons.iter() {
+            match p.intersects(ray) {
+                Intersected(point) => {
+                    intersection = match intersection {
+                        Intersected(new_point) if new_point < point => {
+                            Intersected(new_point)
+                        },
+                        _ => Intersected(point)
+                    }
+                },
+                Missed => ()
+            }
+        }
+        intersection
     }
 }
 
@@ -221,7 +275,14 @@ impl Shape for Sphere {
 mod tests {
     use vec::Vec3;
     use ray::Ray;
-    use scene::shapes::{ Poly, Vertex, Sphere, Shape, Missed, Intersected };
+    use scene::shapes::{PolySet, Poly, Vertex, Sphere, Shape, Missed, Intersected};
+
+    static SIN_PI_4: f32 = 0.7071067812;
+
+    fn assert_approx_eq(a: f32, b: f32) {
+        assert!((a - b).abs() < 1.0e-6,
+                "{} is not approximately equal to {}", a, b);
+    }
 
     #[test]
     fn can_init_vertex() {
@@ -248,5 +309,21 @@ mod tests {
         let res = shp.intersects(ray);
 
         assert_eq!(res, Intersected(4.0));
+    }
+
+    #[test]
+    fn can_intersect_polyset() {
+        let mut poly = Poly::new();
+        poly.vertices[0].position = Vec3::init(2.0, 0.0, -3.0);
+        poly.vertices[1].position = Vec3::init(-2.0, 0.0, -3.0);
+        poly.vertices[2].position = Vec3::init(0.0, 2.0, -1.0);
+        let mut set = PolySet::new();
+        set.polygons.push(poly);
+        let ray = Ray::init(Vec3::init(0.0, SIN_PI_4, 0.0), Vec3::init(0.0, 0.0, -1.0));
+
+        match set.intersects(ray) {
+            Intersected(point) => assert_approx_eq(point, 2.292893),
+            Missed => fail!("Ray should have intersected at {}", 2.292893 as f32)
+        }
     }
 }
