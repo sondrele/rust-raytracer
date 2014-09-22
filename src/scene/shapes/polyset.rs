@@ -5,6 +5,7 @@ use scene::shapes;
 use scene::shapes::{Shape, Intersection};
 use scene::shapes::poly::Poly;
 
+#[deriving(Show)]
 pub struct PolySet {
     pub materials: Vec<Material>,
     pub polygons: Vec<Poly>
@@ -37,7 +38,6 @@ impl Shape for PolySet {
         let mut intersection = shapes::Missed;
 
         for p in self.polygons.iter() {
-            // println!("{}", p);
             match p.intersects(ray) {
                 shapes::Intersected(point) => {
                     intersection = match intersection {
@@ -47,10 +47,17 @@ impl Shape for PolySet {
                         _ => shapes::IntersectedWithColor(point, color)
                     }
                 },
+                shapes::IntersectedWithIndex(point, index) => {
+                    intersection = match intersection {
+                        shapes::Intersected(new_point) if new_point < point => {
+                            shapes::IntersectedWithColor(new_point, self.materials[index].diffuse)
+                        },
+                        _ => shapes::IntersectedWithColor(point, self.materials[index].diffuse)
+                    }
+                },
                 _ => () // TODO: Match for per_vertex_color
             }
         }
-        // fail!("Exit");
         intersection
     }
 }

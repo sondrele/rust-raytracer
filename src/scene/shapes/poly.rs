@@ -1,7 +1,8 @@
 use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
-use scene::shapes::{Shape, Intersection, Intersected, Missed};
+use scene::shapes;
+use scene::shapes::{Shape, Intersection};
 use std::fmt;
 
 #[deriving(Show)]
@@ -54,10 +55,7 @@ pub struct Poly {
 
 impl fmt::Show for [Vertex, ..3] {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // write!(f, "{}", self[0]);
-        // write!(f, "{}", self[1]);
-        // write!(f, "{}", self[2])
-        write!(f, "3")
+        write!(f, "[{} {} {}]", self[0], self[1], self[2])
     }
 }
 
@@ -97,7 +95,7 @@ impl Shape for Poly {
         let a0: f32 = e1.dot(h);
 
         if a0 > -0.0000001 && a0 < 0.0000001 {
-            return Missed;
+            return shapes::Missed;
         }
 
         let f: f32 = 1.0 / a0;
@@ -105,14 +103,14 @@ impl Shape for Poly {
         let u: f32 = f * s.dot(h);
 
         if u < 0.0 || u > 1.0 {
-            return Missed;
+            return shapes::Missed;
         }
 
         let q: Vec3 = s.cross(e1);
         let v: f32 = f * d.dot(q);
 
         if v < 0.0 || u + v > 1.0 {
-            return Missed;
+            return shapes::Missed;
         }
 
         // at this stage we can compute t to find out where
@@ -120,8 +118,8 @@ impl Shape for Poly {
         let t: f32 = f * e2.dot(q);
 
         match t > 0.0000001 {
-            true => Intersected(t), // ray intersection
-            false => Missed         // this means that there is a line intersection
+            true => shapes::IntersectedWithIndex(t, 0), // ray intersection
+            false => shapes::Missed         // this means that there is a line intersection
                                     // but not a ray intersection
         }
     }

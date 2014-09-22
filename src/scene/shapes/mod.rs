@@ -11,6 +11,7 @@ pub mod polyset;
 pub enum Intersection {
     Intersected(f32),
     IntersectedWithColor(f32, Color),
+    IntersectedWithIndex(f32, uint),
     Missed
 }
 
