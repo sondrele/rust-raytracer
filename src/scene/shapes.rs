@@ -90,9 +90,9 @@ impl Shape for Poly {
     fn intersects(&self, ray: Ray) -> Intersection {
         let p: Vec3 = ray.ori;
         let d: Vec3 = ray.dir;
-        let v0: Vec3 = self.vertices[0].position;
-        let v1: Vec3 = self.vertices[1].position;
-        let v2: Vec3 = self.vertices[2].position;
+        let v0: Vec3 = self[0].position;
+        let v1: Vec3 = self[1].position;
+        let v2: Vec3 = self[2].position;
 
         let e1: Vec3 = v1 - v0;
         let e2: Vec3 = v2 - v0;
