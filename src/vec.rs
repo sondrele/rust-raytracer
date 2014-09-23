@@ -94,6 +94,17 @@ impl Vec3 {
     pub fn dot(&self, other: Vec3) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
+
+    pub fn invert(&self) -> Vec3 {
+        self.mult(-1.0)
+    }
+
+    pub fn distance(&self, other: Vec3) -> f32 {
+        let a = self.x - other.x;
+        let b = self.y - other.y;
+        let c = self.z - other.z;
+        (a * a + b * b + c * c).sqrt()
+    }
 }
 
 #[test]
