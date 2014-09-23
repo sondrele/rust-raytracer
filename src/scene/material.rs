@@ -59,9 +59,25 @@ impl Color {
             b: (self.b * 255.0) as u8
         }
     }
+
+    pub fn mult(&self, num: f32) -> Color {
+        Color::init(self.r * num, self.g * num, self.b * num)
+    }
 }
 
-#[deriving(Clone, Show)]
+impl Mul<Color, Color> for Color {
+    fn mul(&self, col: &Color) -> Color {
+        Color::init(self.r * col.r, self.g * col.g, self.b * col.b)
+    }
+}
+
+impl Add<Color, Color> for Color {
+    fn add(&self, col: &Color) -> Color {
+        Color::init(self.r + col.r, self.g + col.g, self.b + col.b)
+    }
+}
+
+#[deriving(Clone, PartialEq, Show)]
 pub struct Material {
     pub diffuse: Color,
     pub ambient: Color,
