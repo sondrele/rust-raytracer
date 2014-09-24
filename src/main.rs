@@ -1,7 +1,7 @@
-extern crate tracer;
+extern crate rstracer;
 
-use tracer::RayTracer;
-use tracer::parser::SceneParser;
+use rstracer::RayTracer;
+use rstracer::parser::SceneParser;
 
 fn main() {
     let mut parser = SceneParser::new("scenes/test01.ascii".to_string());

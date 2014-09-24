@@ -1,0 +1,9 @@
+[package]
+
+name = "rstracer"
+version = "0.0.1"
+authors = ["Sondre Lefsaker"]
+
+[dependencies.bmp]
+
+git = "https://github.com/sondrele/rust-bmp.git"

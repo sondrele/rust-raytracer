@@ -1,0 +1,12 @@
+[root]
+name = "rstracer"
+version = "0.0.1"
+dependencies = [
+ "bmp 0.0.1 (git+https://github.com/sondrele/rust-bmp.git#4585e8245ed84a430976ff5d85f1babdfb1fdeb0)",
+]
+
+[[package]]
+name = "bmp"
+version = "0.0.1"
+source = "git+https://github.com/sondrele/rust-bmp.git#4585e8245ed84a430976ff5d85f1babdfb1fdeb0"
+
