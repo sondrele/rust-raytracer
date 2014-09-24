@@ -1,14 +1,9 @@
 rust-raytracer.sublime-project
 rust-raytracer.sublime-workspace
 
-# Executables
-src/tracer
-main
-
-# Libraries
-*.rlib
-
-# Images
+# Ignore generated images
 *.bmp
+
+# Cargo target dir
 target
 
