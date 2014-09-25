@@ -3,6 +3,7 @@ use ray::Ray;
 use scene::material::Material;
 use scene::shapes::{Shape, Intersection, IntersectedWithColor, Missed};
 
+#[deriving(Show)]
 pub struct Sphere {
     pub materials: Vec<Material>,
     pub origin: Vec3,

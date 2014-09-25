@@ -83,7 +83,7 @@ mod tests {
         poly.vertices[0].position = Vec3::init(2.0, 0.0, -3.0);
         poly.vertices[1].position = Vec3::init(-2.0, 0.0, -3.0);
         poly.vertices[2].position = Vec3::init(0.0, 2.0, -1.0);
-        let mut set = PolySet::new();
+        let mut set = PolySet::init();
         set.polygons.push(poly);
         let ray = Ray::init(Vec3::init(0.0, SIN_PI_4, 0.0), Vec3::init(0.0, 0.0, -1.0));
 

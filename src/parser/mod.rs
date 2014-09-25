@@ -2,8 +2,7 @@ use std::io;
 use std::io::{BufferedReader, File};
 use vec::Vec3;
 use scene::{Scene, Camera, Light, PointLight, DirectionalLight, AreaLight};
-use scene::material::{ Material, Color };
-use scene::shapes::{PolySetType, SphereType};
+use scene::material::{Material, Color};
 use scene::shapes::sphere::Sphere;
 use scene::shapes::polyset::PolySet;
 use scene::shapes::poly::{Poly, Vertex};
@@ -293,10 +292,10 @@ impl SceneParser {
                 scene.lights.push(self.parse_light());
             } else if tkn == "sphere".to_string() {
                 let sphere = self.parse_sphere();
-                scene.shapes.push(SphereType(sphere));
+                scene.shapes.push(box sphere);
             } else if tkn == "poly_set".to_string() {
                 let polyset = self.parse_polygon_set();
-                scene.shapes.push(PolySetType(polyset));
+                scene.shapes.push(box polyset);
             } else {
                 fail!("Unexpected token: {}", tkn);
             }

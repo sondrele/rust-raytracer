@@ -1,7 +1,6 @@
 use vec::Vec3;
 use ray::Ray;
 use scene::material::Color;
-use scene::shapes::ShapeType;
 use scene::shapes::Shape;
 
 pub mod material;
@@ -60,14 +59,14 @@ pub enum SceneIntersection {
     Missed
 }
 
-pub struct Scene {
+pub struct Scene<'a> {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub shapes: Vec<ShapeType>
+    pub shapes: Vec<Box<Shape+'a>>
 }
 
-impl Scene {
-    pub fn new() -> Scene {
+impl<'a> Scene<'a> {
+    pub fn new() -> Scene<'a> {
         Scene {
             camera: Camera::new(),
             lights: Vec::new(),
@@ -94,15 +93,14 @@ mod tests {
     use ray::Ray;
     use scene::Scene;
     use scene::Intersected;
-    use scene::shapes::SphereType;
     use scene::shapes::sphere::Sphere;
     use scene::material::{Color, Material};
 
-    fn create_scene() -> Scene {
+    fn create_scene<'a>() -> Scene<'a> {
         let mut sphere = Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
         sphere.materials.insert(0, Material::init(Color::init(1.0, 0.0, 0.0)));
         let mut scene = Scene::new();
-        scene.shapes.push(SphereType(sphere));
+        scene.shapes.push(box sphere);
         scene
     }
 

@@ -7,7 +7,7 @@ pub mod sphere;
 pub mod poly;
 pub mod polyset;
 
-#[deriving(PartialEq, Show)]
+#[deriving(Show)]
 pub enum Intersection {
     Intersected(f32),
     IntersectedWithColor(f32, Color),
@@ -15,6 +15,7 @@ pub enum Intersection {
     Missed
 }
 
+#[deriving(Show)]
 pub enum ShapeType {
     SphereType(Sphere),
     PolySetType(PolySet)

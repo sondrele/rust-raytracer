@@ -3,6 +3,7 @@ extern crate rstracer;
 use rstracer::RayTracer;
 use rstracer::parser::SceneParser;
 
+#[allow(dead_code)]
 fn main() {
     let mut parser = SceneParser::new("scenes/test01.ascii".to_string());
     let scene = parser.parse_scene();

@@ -14,7 +14,7 @@ pub mod scene;
 
 static SCALE: f32 = 1000.0;
 
-pub struct RayTracer {
+pub struct RayTracer<'a> {
     width: uint,
     height: uint,
     depth: uint,
@@ -24,11 +24,11 @@ pub struct RayTracer {
     parallel_right: Vec3,
     vertical_fov: f32,
     horizontal_fov: f32,
-    scene: Option<Scene>
+    scene: Option<Scene<'a>>
 }
 
-impl RayTracer {
-    pub fn new() -> RayTracer {
+impl<'a> RayTracer<'a> {
+    pub fn new() -> RayTracer<'a> {
         RayTracer {
             width: 0,
             height: 0,
@@ -43,7 +43,7 @@ impl RayTracer {
         }
     }
 
-    pub fn init(width: uint, height: uint, depth: uint) -> RayTracer {
+    pub fn init(width: uint, height: uint, depth: uint) -> RayTracer<'a> {
         RayTracer {
             width: width,
             height: height,
@@ -118,7 +118,6 @@ impl RayTracer {
             None => fail!("RayTracer has not been assigned any Scene")
         }
     }
-
 }
 
 #[cfg(test)]
@@ -127,7 +126,7 @@ mod tests {
     use vec::Vec3;
     use scene::{Scene, Camera};
 
-    fn get_raytraer() -> RayTracer {
+    fn get_raytraer<'a>() -> RayTracer<'a> {
         let mut scene = Scene::new();
         scene.camera = Camera::new();
         scene.camera.view_dir = Vec3::init(0.0, 0.0, -1.0);
