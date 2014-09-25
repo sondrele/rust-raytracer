@@ -1,6 +1,6 @@
 extern crate bmp;
 
-use scene::Scene;
+use scene::{Scene, Light};
 use scene::intersection::Intersection;
 use scene::material::Color;
 use vec::Vec3;
@@ -100,8 +100,30 @@ impl<'a> RayTracer<'a> {
         Ray::init(self.camera_pos, dir)
     }
 
-    fn shade_intersection(intersection: Intersection, _: uint) -> Color {
-        intersection.color()
+    fn shadow_scalar(light: &Light, intersection: &Intersection) -> Color {
+        Color::new()
+    }
+
+    fn shade_intersection<'a>(scene: &Scene<'a>, intersection: Intersection, depth: uint) -> Color {
+        let mut shade = Color::new();
+
+        if depth <= 0 {
+            return shade;
+        }
+        let material = intersection.material();
+        // let kt: f32 = material.transparency;
+        // let ks: Color = material.specular;
+        let ka: Color = material.ambient;
+        let cd: Color = material.diffuse;
+
+        shade = shade + cd * ka;
+
+        for light in scene.lights.iter() {
+            let shadow = RayTracer::shadow_scalar(light, &intersection);
+            shade = shade + shadow * cd;
+        }
+
+        shade
     }
 
     pub fn trace_rays(&self) -> BMPimage {
@@ -114,7 +136,7 @@ impl<'a> RayTracer<'a> {
                         let ray = self.compute_ray(x as f32, y as f32);
                         match scene.intersects(ray) {
                             scene::Intersected(intersection) => {
-                                let color = RayTracer::shade_intersection(intersection, self.depth);
+                                let color = RayTracer::shade_intersection(scene, intersection, self.depth);
                                 img.set_pixel(x as uint, y as uint, color.as_pixel());
                             },
                             scene::Missed => ()

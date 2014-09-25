@@ -25,4 +25,8 @@ impl<'a> Intersection<'a> {
     pub fn color(&self) -> material::Color {
         self.shape.get_material().diffuse
     }
+
+    pub fn material(&self) -> material::Material {
+        self.shape.get_material()
+    }
 }
