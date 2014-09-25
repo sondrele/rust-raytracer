@@ -2,9 +2,11 @@ use vec::Vec3;
 use ray::Ray;
 use scene::material::Color;
 use scene::shapes::Shape;
+use scene::intersection::Intersection;
 
 pub mod material;
 pub mod shapes;
+pub mod intersection;
 
 // Is it possible to mplement traits instead of using enums,
 // make the fields private data and call trait methods
@@ -54,8 +56,8 @@ impl Camera {
     }
 }
 
-pub enum SceneIntersection {
-    Intersected(Color),
+pub enum SceneIntersection<'a> {
+    Intersected(Intersection<'a>),
     Missed
 }
 
@@ -74,11 +76,12 @@ impl<'a> Scene<'a> {
         }
     }
 
-    pub fn intersects(&self, ray: Ray) -> SceneIntersection {
+    pub fn intersects(&'a self, ray: Ray) -> SceneIntersection {
         for shape in self.shapes.iter() {
             match shape.intersects(ray) {
-                shapes::IntersectedWithColor(_, color) => {
-                    return Intersected(color)
+                shapes::IntersectedWithColor(point, color) => {
+                    let intersection = Intersection::new(point, ray, shape);
+                    return Intersected(intersection)
                 },
                 _ => () // TODO: Match for per_vertex_color
             }
@@ -116,7 +119,10 @@ mod tests {
         let scene = create_scene();
 
         match scene.intersects(Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))) {
-            Intersected(color) => assert_eq!(Color::init(1.0, 0.0, 0.0), color),
+            Intersected(intersection) => {
+                let color = intersection.color();
+                assert_eq!(Color::init(1.0, 0.0, 0.0), color)
+            },
             _ => fail!("Ray did not intersect scene")
         }
     }

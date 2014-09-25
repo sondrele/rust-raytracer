@@ -123,6 +123,10 @@ impl Shape for Poly {
                                     // but not a ray intersection
         }
     }
+
+    fn get_material(&self) -> Material {
+        self.materials[0]
+    }
 }
 
 impl Index<u32, Vertex> for Poly {

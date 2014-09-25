@@ -1,7 +1,8 @@
 extern crate bmp;
 
 use scene::Scene;
-use scene::{Intersected, Missed};
+use scene::intersection::Intersection;
+use scene::material::Color;
 use vec::Vec3;
 use ray::Ray;
 
@@ -99,6 +100,10 @@ impl<'a> RayTracer<'a> {
         Ray::init(self.camera_pos, dir)
     }
 
+    fn shade_intersection(intersection: Intersection, _: uint) -> Color {
+        intersection.color()
+    }
+
     pub fn trace_rays(&self) -> BMPimage {
         match self.scene {
             Some(ref scene) => {
@@ -108,8 +113,11 @@ impl<'a> RayTracer<'a> {
                     for x in range(0, self.height as i32) {
                         let ray = self.compute_ray(x as f32, y as f32);
                         match scene.intersects(ray) {
-                            Intersected(c) => img.set_pixel(x as uint, y as uint, c.as_pixel()),
-                            Missed => ()
+                            scene::Intersected(intersection) => {
+                                let color = RayTracer::shade_intersection(intersection, self.depth);
+                                img.set_pixel(x as uint, y as uint, color.as_pixel());
+                            },
+                            scene::Missed => ()
                         }
                     }
                 }

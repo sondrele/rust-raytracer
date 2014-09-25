@@ -96,6 +96,10 @@ impl Shape for Sphere {
             false => IntersectedWithColor(t0, self.materials[0].diffuse)
         }
     }
+
+    fn get_material(&self) -> Material {
+        self.materials[0]
+    }
 }
 
 #[cfg(test)]

@@ -60,6 +60,10 @@ impl Shape for PolySet {
         }
         intersection
     }
+
+    fn get_material(&self) -> Material {
+        self.materials[0]
+    }
 }
 
 #[cfg(test)]

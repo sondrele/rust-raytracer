@@ -1,35 +1,19 @@
+// use vec::Vec3;
 use ray::Ray;
-use scene::material::Color;
-use scene::shapes::sphere::Sphere;
-use scene::shapes::polyset::PolySet;
-
+use scene::material::{Color, Material};
 pub mod sphere;
 pub mod poly;
 pub mod polyset;
 
-#[deriving(Show)]
-pub enum Intersection {
+pub enum Intersection<'a> {
     Intersected(f32),
     IntersectedWithColor(f32, Color),
     IntersectedWithIndex(f32, uint),
     Missed
 }
 
-#[deriving(Show)]
-pub enum ShapeType {
-    SphereType(Sphere),
-    PolySetType(PolySet)
-}
-
 pub trait Shape {
     fn intersects(&self, ray: Ray) -> Intersection;
-}
-
-impl Shape for ShapeType {
-    fn intersects(&self, ray: Ray) -> Intersection {
-        match self {
-            &SphereType(ref sphere) => sphere.intersects(ray),
-            &PolySetType(ref polyset) => polyset.intersects(ray)
-        }
-    }
+    // fn surface_normal(&self, point: Vec3) -> Vec3;
+    fn get_material(&self) -> Material;
 }
