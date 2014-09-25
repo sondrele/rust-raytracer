@@ -18,7 +18,7 @@ impl<'a> Intersection<'a> {
         }
     }
 
-    pub fn intersection_point(&self) -> Vec3 {
+    pub fn point(&self) -> Vec3 {
         self.ray.ori + self.ray.dir.mult(self.point)
     }
 

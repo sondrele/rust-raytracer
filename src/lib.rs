@@ -100,29 +100,74 @@ impl<'a> RayTracer<'a> {
         Ray::init(self.camera_pos, dir)
     }
 
-    fn shadow_scalar(light: &Light, intersection: &Intersection) -> Color {
-        Color::new()
+    fn shadow_scalar<'a>(scene: &Scene<'a>, light: &Light, intersection: &Intersection, depth: uint) -> Color {
+        if depth <= 0 {
+            return Color::new();
+        }
+
+        let dest: Vec3 = light.pos;
+        let mut ori: Vec3 = intersection.point();
+        let mut dir: Vec3 = Vec3::new();
+
+        match light.kind {
+            scene::DirectionalLight => {
+                dir = light.dir.invert();
+                ori = ori + dir.mult(0.0001);
+            },
+            scene::PointLight => {
+                dir = dest - ori;
+                dir.normalize();
+                ori = ori + dir.mult(0.0001);
+            },
+            scene::AreaLight => return Color::new()
+        }
+
+        let mut shade: f32 = 0.0;
+        let shadow: Ray = Ray::init(ori, dir);
+
+        match scene.intersects(shadow) {
+            scene::Intersected(intersection) => {
+                if intersection.material().transparency == 0.0 {
+                    match light.kind {
+                        scene::PointLight if ori.distance(intersection.point()) > ori.distance(dest) => {
+                            shade += 1.0; // Intersects with object behind light source
+                        }
+                        _ => () // Hit something before directional light, ignoring area light
+                    }
+                } else {
+                    () // Shape is transparent, continue recursively
+                }
+            },
+            scene::Missed => shade += 1.0, // The point is in direct light
+        }
+
+        Color::init(shade, shade, shade)
     }
 
-    fn shade_intersection<'a>(scene: &Scene<'a>, intersection: Intersection, depth: uint) -> Color {
+    fn ambient_lightning(kt: f32, ka: Color, cd: Color) -> Color {
+        (cd * ka).mult(1.0 - kt)
+    }
+
+    fn shade_intersection<'a>(scene: &Scene<'a>, intersection: &Intersection, depth: uint) -> Color {
         let mut shade = Color::new();
 
         if depth <= 0 {
             return shade;
         }
         let material = intersection.material();
-        // let kt: f32 = material.transparency;
+        let kt: f32 = material.transparency;
         // let ks: Color = material.specular;
         let ka: Color = material.ambient;
         let cd: Color = material.diffuse;
 
-        shade = shade + cd * ka;
+        let amb_light: Color = RayTracer::ambient_lightning(kt, ka, cd);
 
         for light in scene.lights.iter() {
-            let shadow = RayTracer::shadow_scalar(light, &intersection);
+            let shadow = RayTracer::shadow_scalar(scene, light, intersection, depth);
             shade = shade + shadow * cd;
         }
 
+        shade = amb_light + shade;
         shade
     }
 
@@ -136,7 +181,7 @@ impl<'a> RayTracer<'a> {
                         let ray = self.compute_ray(x as f32, y as f32);
                         match scene.intersects(ray) {
                             scene::Intersected(intersection) => {
-                                let color = RayTracer::shade_intersection(scene, intersection, self.depth);
+                                let color = RayTracer::shade_intersection(scene, &intersection, self.depth);
                                 img.set_pixel(x as uint, y as uint, color.as_pixel());
                             },
                             scene::Missed => ()
