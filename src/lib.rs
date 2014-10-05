@@ -148,6 +148,16 @@ impl<'a> RayTracer<'a> {
         (cd * ka).mult(1.0 - kt)
     }
 
+    fn calculate_fattj(light: &Light, point: Vec3) -> f32 {
+        match light.kind {
+            scene::DirectionalLight => 1.0,
+            _ => {
+                let distance = point.distance(light.pos);
+                (1.0 as f32).min(1.0 / (0.25 + 0.1 * distance + 0.01 * distance * distance))
+            }
+        }
+    }
+
     fn shade_intersection<'a>(scene: &Scene<'a>, intersection: &Intersection, depth: uint) -> Color {
         let mut shade = Color::new();
 
@@ -163,8 +173,12 @@ impl<'a> RayTracer<'a> {
         let amb_light: Color = RayTracer::ambient_lightning(kt, ka, cd);
 
         for light in scene.lights.iter() {
-            let shadow = RayTracer::shadow_scalar(scene, light, intersection, depth);
-            shade = shade + shadow * cd;
+            let fattj = RayTracer::calculate_fattj(light, intersection.point());
+            if fattj > 0.0 {
+                let shadow = RayTracer::shadow_scalar(scene, light, intersection, depth);
+                shade = shade + cd * shadow.mult(fattj);
+            }
+
         }
 
         shade = amb_light + shade;
