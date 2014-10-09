@@ -297,7 +297,7 @@ impl SceneParser {
             } else if tkn == "poly_set".to_string() {
                 let mut polyset = self.parse_polygon_set();
 
-                for i in range(0, polyset.polygons.len()) {
+                for _ in range(0, polyset.polygons.len()) {
                     match polyset.polygons.pop() {
                         Some(poly) => scene.shapes.push(box poly),
                         None => fail!("Incorrect amount of polygons in polyset")

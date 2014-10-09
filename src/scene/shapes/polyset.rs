@@ -1,7 +1,5 @@
-use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
-use scene::material::Color;
 use scene::shapes;
 use scene::shapes::{Shape, ShapeIntersection};
 use scene::shapes::poly::Poly;
@@ -26,10 +24,8 @@ impl PolySet {
             polygons: Vec::new()
         }
     }
-}
 
-impl Shape for PolySet {
-    fn intersects(&self, ray: Ray) -> ShapeIntersection {
+    pub fn intersects(&self, ray: Ray) -> ShapeIntersection {
         let mut intersection = shapes::Missed;
 
         for p in self.polygons.iter() {
@@ -46,14 +42,6 @@ impl Shape for PolySet {
             }
         }
         intersection
-    }
-
-    fn get_material(&self) -> Material {
-        self.materials[0]
-    }
-
-    fn surface_normal(&self, _: Vec3, _: Vec3) -> Vec3 {
-        fail!("Can not get surface normal of PolySet")
     }
 }
 
