@@ -207,29 +207,39 @@ impl<'a> RayTracer<'a> {
     }
 
     fn shade_intersection<'a>(scene: &Scene<'a>, intersection: &Intersection, depth: uint) -> Color {
-        let mut shade = Color::new();
-
         if depth <= 0 {
-            return shade;
+            return Color::new();
         }
+
         let material = intersection.material();
         let kt: f32 = material.transparency;
+        let ks: Color = material.specular;
         let ka: Color = material.ambient;
         let cd: Color = material.diffuse;
 
-        let amb_light: Color = RayTracer::ambient_lightning(kt, ka, cd);
+        let ambient_light: Color = RayTracer::ambient_lightning(kt, ka, cd);
 
+        let mut direct_light: Color = Color::new();
         for light in scene.lights.iter() {
             let fattj = RayTracer::calculate_fattj(light, intersection.point());
             if fattj > 0.0 {
                 let shadow_scalar = RayTracer::shadow_scalar(scene, light, intersection, depth);
-                let direct_light = RayTracer::direct_lightning(light, intersection, shadow_scalar, fattj);
-                shade = shade + direct_light;
+                direct_light = direct_light + RayTracer::direct_lightning(light, intersection, shadow_scalar, fattj);
             }
         }
 
-        shade = amb_light + shade;
-        shade
+        let reflection_light = if ks.scalar() > 0.0 {
+            let ray: Ray = intersection.reflective_ray();
+            match scene.intersects(ray) {
+                scene::Intersected(intersection) =>
+                    ks * RayTracer::shade_intersection(scene, &intersection, depth - 1),
+                scene::Missed => Color::new()
+            }
+        } else {
+            Color::new()
+        };
+
+        direct_light + ambient_light + reflection_light
     }
 
     pub fn trace_rays(&self) -> BMPimage {

@@ -37,4 +37,12 @@ impl<'a> Intersection<'a> {
     pub fn surface_normal(&self) -> Vec3 {
         self.shape.surface_normal(self.ray.dir, self.point())
     }
+
+    pub fn reflective_ray(&self) -> Ray {
+        let normal = self.surface_normal();
+        let d0 = self.ray.dir.invert();
+        let origin = self.point() + normal.mult(0.0001);
+        let direction = normal.mult(d0.dot(normal) * 2.0) - d0;
+        Ray::init(origin, direction)
+    }
 }
