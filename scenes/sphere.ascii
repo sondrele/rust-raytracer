@@ -24,9 +24,9 @@ sphere {
   material {
     diffColor 0.56 0.35 0.14
     ambColor 0.2 0.2 0.2
-    specColor 0 0 0
+    specColor 0.1 0.1 0.1
     emisColor 0 0 0
-    shininess 0
+    shininess 0.2
     ktran 0
   }
   origin 0 0 -5

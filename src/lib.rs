@@ -165,13 +165,21 @@ impl<'a> RayTracer<'a> {
         cd.mult(a * b)
     }
 
+    fn specular_lightning(q: f32, ks: Color, normal: Vec3, dj: Vec3, v: Vec3) -> Color {
+        let mut t: f32 = normal.dot(dj);
+        let mut rj: Vec3 = normal.mult(t).mult(2.0);
+        rj = rj - dj;
+        t = rj.dot(v).max(0.0);
+        ks.mult(t.powf(q))
+    }
+
     fn direct_lightning(light: &Light, intersection: &Intersection , sj: Color, fattj: f32) -> Color {
         let point: Vec3 = intersection.point();
         let material = intersection.material();
         let kt: f32 = material.transparency;
         let cd: Color = material.diffuse;
-        // let ks: Color = material.specular;
-        // float q = material.getShininess() * 128;
+        let ks: Color = material.specular;
+        let q: f32 = material.shininess * 128.0;
 
         let ij: Color = light.intensity;
 
@@ -191,7 +199,11 @@ impl<'a> RayTracer<'a> {
 
         let normal: Vec3 = intersection.surface_normal();
         let diffuse_light: Color = RayTracer::diffuse_lightning(kt, cd, normal, dj);
-        direct_light * diffuse_light
+
+        let v: Vec3 = intersection.direction().invert();
+        let specular_light: Color = RayTracer::specular_lightning(q, ks, normal, dj, v);
+
+        direct_light * (diffuse_light + specular_light)
     }
 
     fn shade_intersection<'a>(scene: &Scene<'a>, intersection: &Intersection, depth: uint) -> Color {
@@ -202,7 +214,6 @@ impl<'a> RayTracer<'a> {
         }
         let material = intersection.material();
         let kt: f32 = material.transparency;
-        // let ks: Color = material.specular;
         let ka: Color = material.ambient;
         let cd: Color = material.diffuse;
 
@@ -212,7 +223,6 @@ impl<'a> RayTracer<'a> {
             let fattj = RayTracer::calculate_fattj(light, intersection.point());
             if fattj > 0.0 {
                 let shadow_scalar = RayTracer::shadow_scalar(scene, light, intersection, depth);
-                // shade = shade + cd * shadow_scalar.mult(fattj);
                 let direct_light = RayTracer::direct_lightning(light, intersection, shadow_scalar, fattj);
                 shade = shade + direct_light;
             }
