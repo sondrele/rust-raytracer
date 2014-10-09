@@ -1,7 +1,7 @@
 use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
-use scene::shapes::{Shape, Intersection, IntersectedWithColor, Missed};
+use scene::shapes::{Shape, Intersection, Intersected, Missed};
 
 #[deriving(Show)]
 pub struct Sphere {
@@ -92,13 +92,19 @@ impl Shape for Sphere {
 
         // if t0 is less than zero, the intersection point is at t1 else the intersection point is at t0
         match t0 < 0.0 {
-            true => IntersectedWithColor(t1, self.materials[0].diffuse),
-            false => IntersectedWithColor(t0, self.materials[0].diffuse)
+            true => Intersected(t1),
+            false => Intersected(t0)
         }
     }
 
     fn get_material(&self) -> Material {
         self.materials[0]
+    }
+
+    fn surface_normal(&self, _: Vec3, point: Vec3) -> Vec3 {
+        let mut normal: Vec3 = point - self.origin;
+        normal.normalize();
+        normal
     }
 }
 
@@ -107,7 +113,7 @@ mod tests {
     use vec::Vec3;
     use ray::Ray;
     use scene::shapes::sphere::Sphere;
-    use scene::shapes::{IntersectedWithColor, Shape};
+    use scene::shapes::{Intersected, Shape};
 
     #[test]
     fn can_init_sphere(){
@@ -122,7 +128,7 @@ mod tests {
         let res = shp.intersects(ray);
 
         match res {
-            IntersectedWithColor(point, _) => assert_eq!(point, 4.0),
+            Intersected(point) => assert_eq!(point, 4.0),
             _ => fail!("Ray did not intersect sphere")
         }
     }

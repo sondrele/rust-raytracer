@@ -83,6 +83,10 @@ impl<'a> Scene<'a> {
                     let intersection = Intersection::new(point, ray, shape);
                     return Intersected(intersection)
                 },
+                shapes::Intersected(point) => {
+                    let intersection = Intersection::new(point, ray, shape);
+                    return Intersected(intersection)
+                },
                 _ => () // TODO: Match for per_vertex_color
             }
         }

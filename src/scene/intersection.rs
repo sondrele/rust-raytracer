@@ -29,4 +29,8 @@ impl<'a> Intersection<'a> {
     pub fn material(&self) -> material::Material {
         self.shape.get_material()
     }
+
+    pub fn surface_normal(&self) -> Vec3 {
+        self.shape.surface_normal(self.ray.dir, self.point())
+    }
 }

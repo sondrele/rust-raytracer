@@ -127,6 +127,20 @@ impl Shape for Poly {
     fn get_material(&self) -> Material {
         self.materials[0]
     }
+
+    fn surface_normal(&self, direction: Vec3, _: Vec3) -> Vec3 {
+        let mut normal: Vec3;
+
+        let v: Vec3 = self[1].position - self[0].position;
+        let w: Vec3 = self[2].position - self[0].position;
+        normal = v.cross(w);
+        normal.normalize();
+
+        if normal.dot(direction) > 0.0 {
+            normal = normal.invert();
+        }
+        normal
+    }
 }
 
 impl Index<u32, Vertex> for Poly {

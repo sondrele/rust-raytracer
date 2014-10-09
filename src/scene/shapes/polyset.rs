@@ -1,3 +1,4 @@
+use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
 use scene::material::Color;
@@ -63,6 +64,10 @@ impl Shape for PolySet {
 
     fn get_material(&self) -> Material {
         self.materials[0]
+    }
+
+    fn surface_normal(&self, _: Vec3, _: Vec3) -> Vec3 {
+        fail!("Can not get surface normal of PolySet")
     }
 }
 
