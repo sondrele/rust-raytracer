@@ -1,0 +1,88 @@
+Composer format 2.1 ascii
+camera {
+  position 0 0 50
+  viewDirection 0 0 -1
+  focalDistance 12.2118
+  orthoUp 0 1 0
+  verticalFOV 0.8
+}
+sphere {
+  name Diff
+  numMaterials 1
+  material {
+    diffColor 0 0 0
+    ambColor 0 0 0
+    specColor 0.1 0.1 0.1
+    emisColor 0 0 0
+    shininess 0
+    ktran 0
+  }
+  origin -12 8 -12
+  radius 5.5
+  xaxis 1 0 0
+  xlength 1.33453
+  yaxis 0 1 0
+  ylength 1.33453
+  zaxis 0 0 1
+  zlength 1.33453
+}
+sphere {
+  name Diff
+  numMaterials 1
+  material {
+    diffColor 0 0 0
+    ambColor 0 0 0
+    specColor 0.3 0.3 0.3
+    emisColor 0 0 0
+    shininess 0
+    ktran 0
+  }
+  origin -12 -8 -12
+  radius 5.5
+  xaxis 1 0 0
+  xlength 1.33453
+  yaxis 0 1 0
+  ylength 1.33453
+  zaxis 0 0 1
+  zlength 1.33453
+}
+sphere {
+  name Diff
+  numMaterials 1
+  material {
+    diffColor 0 0 0
+    ambColor 0 0 0
+    specColor 0.6 0.6 0.6
+    emisColor 0 0 0
+    shininess 0
+    ktran 0
+  }
+  origin 12 8 -12
+  radius 5.5
+  xaxis 1 0 0
+  xlength 1.33453
+  yaxis 0 1 0
+  ylength 1.33453
+  zaxis 0 0 1
+  zlength 1.33453
+}
+sphere {
+  name Spec
+  numMaterials 1
+  material {
+    diffColor 0 0 0 
+    ambColor 0 0 0
+    specColor 1 1 1
+    emisColor 0 0 0
+    shininess 1
+    ktran 0
+  }
+  origin 12 -8 -12
+  radius 5.5
+  xaxis 1 0 0
+  xlength 1.33453
+  yaxis 0 1 0
+  ylength 1.33453
+  zaxis 0 0 1
+  zlength 1.33453
+}
