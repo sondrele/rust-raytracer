@@ -26,16 +26,10 @@ impl PolySet {
             polygons: Vec::new()
         }
     }
-
-    fn get_color(&self) -> Color {
-        // Color::init(1.0, 1.0, 1.0)
-        Color::init(0.0, 0.0, 0.0)
-    }
 }
 
 impl Shape for PolySet {
     fn intersects(&self, ray: Ray) -> Intersection {
-        let color = self.get_color();
         let mut intersection = shapes::Missed;
 
         for p in self.polygons.iter() {
@@ -43,17 +37,9 @@ impl Shape for PolySet {
                 shapes::Intersected(point) => {
                     intersection = match intersection {
                         shapes::Intersected(new_point) if new_point < point => {
-                            shapes::IntersectedWithColor(new_point, color)
+                            shapes::Intersected(new_point)
                         },
-                        _ => shapes::IntersectedWithColor(point, color)
-                    }
-                },
-                shapes::IntersectedWithIndex(point, index) => {
-                    intersection = match intersection {
-                        shapes::Intersected(new_point) if new_point < point => {
-                            shapes::IntersectedWithColor(new_point, self.materials[index].diffuse)
-                        },
-                        _ => shapes::IntersectedWithColor(point, self.materials[index].diffuse)
+                        _ => shapes::Intersected(point)
                     }
                 },
                 _ => () // TODO: Match for per_vertex_color
@@ -75,7 +61,7 @@ impl Shape for PolySet {
 mod tests {
     use vec::Vec3;
     use ray::Ray;
-    use scene::shapes::{Shape, IntersectedWithColor};
+    use scene::shapes::{Shape, Intersected};
     use scene::shapes::polyset::PolySet;
     use scene::shapes::poly::Poly;
 
@@ -97,7 +83,7 @@ mod tests {
         let ray = Ray::init(Vec3::init(0.0, SIN_PI_4, 0.0), Vec3::init(0.0, 0.0, -1.0));
 
         match set.intersects(ray) {
-            IntersectedWithColor(point, _) => assert_approx_eq(point, 2.292893),
+            Intersected(point) => assert_approx_eq(point, 2.292893),
             _ => fail!("Ray should have intersected at {}", 2.292893 as f32)
         }
     }

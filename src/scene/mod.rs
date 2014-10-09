@@ -75,22 +75,28 @@ impl<'a> Scene<'a> {
             shapes: Vec::new()
         }
     }
-
     pub fn intersects(&'a self, ray: Ray) -> SceneIntersection {
+        let mut intersection = Missed;
+        let mut point: f32 = 0.0;
+
+        let mut has_intersected = false;
+
         for shape in self.shapes.iter() {
             match shape.intersects(ray) {
-                shapes::IntersectedWithColor(point, color) => {
-                    let intersection = Intersection::new(point, ray, shape);
-                    return Intersected(intersection)
+                shapes::Intersected(new_point) if !has_intersected => {
+                    has_intersected = true;
+                    point = new_point;
+                    intersection = Intersected(Intersection::new(point, ray, shape));
                 },
-                shapes::Intersected(point) => {
-                    let intersection = Intersection::new(point, ray, shape);
-                    return Intersected(intersection)
+                shapes::Intersected(new_point) if has_intersected && new_point < point => {
+                    point = new_point;
+                    intersection = Intersected(Intersection::new(point, ray, shape));
                 },
                 _ => () // TODO: Match for per_vertex_color
             }
         }
-        Missed
+
+        intersection
     }
 }
 

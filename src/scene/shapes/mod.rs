@@ -1,14 +1,13 @@
 use vec::Vec3;
 use ray::Ray;
-use scene::material::{Color, Material};
+use scene::material::Material;
+
 pub mod sphere;
 pub mod poly;
 pub mod polyset;
 
 pub enum Intersection<'a> {
     Intersected(f32),
-    IntersectedWithColor(f32, Color),
-    IntersectedWithIndex(f32, uint),
     Missed
 }
 

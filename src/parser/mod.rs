@@ -208,7 +208,7 @@ impl SceneParser {
         self.check_and_consume("poly");
         self.check_and_consume("{");
         self.check_and_consume("numVertices");
-        self.consume_next();
+        self.consume_next(); // Always 3
 
         let poly = Poly {
             materials: Vec::new(),
@@ -253,7 +253,8 @@ impl SceneParser {
 
         let mut num_polys = self.next_i32();
         while num_polys > 0 {
-            let poly = self.parse_polygon();
+            let mut poly = self.parse_polygon();
+            poly.materials.push(polyset.materials[0].clone());
             polyset.polygons.push(poly);
             num_polys -= 1;
         }
@@ -294,8 +295,14 @@ impl SceneParser {
                 let sphere = self.parse_sphere();
                 scene.shapes.push(box sphere);
             } else if tkn == "poly_set".to_string() {
-                let polyset = self.parse_polygon_set();
-                scene.shapes.push(box polyset);
+                let mut polyset = self.parse_polygon_set();
+
+                for i in range(0, polyset.polygons.len()) {
+                    match polyset.polygons.pop() {
+                        Some(poly) => scene.shapes.push(box poly),
+                        None => fail!("Incorrect amount of polygons in polyset")
+                    }
+                }
             } else {
                 fail!("Unexpected token: {}", tkn);
             }
@@ -464,6 +471,6 @@ mod test_parser {
         let mut parser = scene_parser("scene");
         let scene = parser.parse_scene();
         assert_eq!(scene.lights.len(), 3);
-        assert_eq!(scene.shapes.len(), 2);
+        assert_eq!(scene.shapes.len(), 13);
     }
 }

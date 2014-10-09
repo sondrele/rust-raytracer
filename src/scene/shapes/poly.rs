@@ -118,7 +118,7 @@ impl Shape for Poly {
         let t: f32 = f * e2.dot(q);
 
         match t > 0.0000001 {
-            true => shapes::IntersectedWithIndex(t, 0), // ray intersection
+            true => shapes::Intersected(t), // ray intersection
             false => shapes::Missed         // this means that there is a line intersection
                                     // but not a ray intersection
         }
