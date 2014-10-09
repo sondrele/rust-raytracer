@@ -1,7 +1,8 @@
 use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
-use scene::shapes::{Shape, Intersection, Intersected, Missed};
+use scene::shapes;
+use scene::shapes::{Shape, ShapeIntersection};
 
 #[deriving(Show)]
 pub struct Sphere {
@@ -46,7 +47,7 @@ impl Sphere {
 }
 
 impl Shape for Sphere {
-    fn intersects(&self, ray: Ray) -> Intersection {
+    fn intersects(&self, ray: Ray) -> ShapeIntersection {
         // Transforming ray to object space
         let transformed_origin = ray.ori - self.origin;
 
@@ -63,7 +64,7 @@ impl Shape for Sphere {
         // if discriminant is negative there are no real roots, so return
         // false as ray misses sphere
         if disc < 0.0 {
-            return Missed;
+            return shapes::Missed;
         }
 
         // compute q as described above
@@ -87,13 +88,13 @@ impl Shape for Sphere {
         // if t1 is less than zero, the object is in the ray's negative direction
         // and consequently the ray misses the sphere
         if t1 < 0.0 {
-            return Missed;
+            return shapes::Missed;
         }
 
         // if t0 is less than zero, the intersection point is at t1 else the intersection point is at t0
         match t0 < 0.0 {
-            true => Intersected(t1),
-            false => Intersected(t0)
+            true => shapes::Hit(t1),
+            false => shapes::Hit(t0)
         }
     }
 
@@ -113,7 +114,7 @@ mod tests {
     use vec::Vec3;
     use ray::Ray;
     use scene::shapes::sphere::Sphere;
-    use scene::shapes::{Intersected, Shape};
+    use scene::shapes::{Hit, Shape};
 
     #[test]
     fn can_init_sphere(){
@@ -128,7 +129,7 @@ mod tests {
         let res = shp.intersects(ray);
 
         match res {
-            Intersected(point) => assert_eq!(point, 4.0),
+            Hit(point) => assert_eq!(point, 4.0),
             _ => fail!("Ray did not intersect sphere")
         }
     }

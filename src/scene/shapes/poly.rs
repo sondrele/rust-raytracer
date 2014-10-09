@@ -2,7 +2,7 @@ use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
 use scene::shapes;
-use scene::shapes::{Shape, Intersection};
+use scene::shapes::{Shape, ShapeIntersection};
 use std::fmt;
 
 #[deriving(Show)]
@@ -81,7 +81,7 @@ impl Poly {
 }
 
 impl Shape for Poly {
-    fn intersects(&self, ray: Ray) -> Intersection {
+    fn intersects(&self, ray: Ray) -> ShapeIntersection {
         let p: Vec3 = ray.ori;
         let d: Vec3 = ray.dir;
         let v0: Vec3 = self[0].position;
@@ -118,7 +118,7 @@ impl Shape for Poly {
         let t: f32 = f * e2.dot(q);
 
         match t > 0.0000001 {
-            true => shapes::Intersected(t), // ray intersection
+            true => shapes::Hit(t), // ray intersection
             false => shapes::Missed         // this means that there is a line intersection
                                     // but not a ray intersection
         }

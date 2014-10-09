@@ -6,13 +6,13 @@ pub mod sphere;
 pub mod poly;
 pub mod polyset;
 
-pub enum Intersection<'a> {
-    Intersected(f32),
+pub enum ShapeIntersection<'a> {
+    Hit(f32),
     Missed
 }
 
 pub trait Shape {
-    fn intersects(&self, ray: Ray) -> Intersection;
+    fn intersects(&self, ray: Ray) -> ShapeIntersection;
     fn surface_normal(&self, direction: Vec3, point: Vec3) -> Vec3;
     fn get_material(&self) -> Material;
 }

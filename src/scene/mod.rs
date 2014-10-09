@@ -83,12 +83,12 @@ impl<'a> Scene<'a> {
 
         for shape in self.shapes.iter() {
             match shape.intersects(ray) {
-                shapes::Intersected(new_point) if !has_intersected => {
+                shapes::Hit(new_point) if !has_intersected => {
                     has_intersected = true;
                     point = new_point;
                     intersection = Intersected(Intersection::new(point, ray, shape));
                 },
-                shapes::Intersected(new_point) if has_intersected && new_point < point => {
+                shapes::Hit(new_point) if has_intersected && new_point < point => {
                     point = new_point;
                     intersection = Intersected(Intersection::new(point, ray, shape));
                 },

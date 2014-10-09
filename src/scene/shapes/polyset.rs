@@ -3,7 +3,7 @@ use ray::Ray;
 use scene::material::Material;
 use scene::material::Color;
 use scene::shapes;
-use scene::shapes::{Shape, Intersection};
+use scene::shapes::{Shape, ShapeIntersection};
 use scene::shapes::poly::Poly;
 
 #[deriving(Show)]
@@ -29,17 +29,17 @@ impl PolySet {
 }
 
 impl Shape for PolySet {
-    fn intersects(&self, ray: Ray) -> Intersection {
+    fn intersects(&self, ray: Ray) -> ShapeIntersection {
         let mut intersection = shapes::Missed;
 
         for p in self.polygons.iter() {
             match p.intersects(ray) {
-                shapes::Intersected(point) => {
+                shapes::Hit(point) => {
                     intersection = match intersection {
-                        shapes::Intersected(new_point) if new_point < point => {
-                            shapes::Intersected(new_point)
+                        shapes::Hit(new_point) if new_point < point => {
+                            shapes::Hit(new_point)
                         },
-                        _ => shapes::Intersected(point)
+                        _ => shapes::Hit(point)
                     }
                 },
                 _ => () // TODO: Match for per_vertex_color
@@ -61,7 +61,7 @@ impl Shape for PolySet {
 mod tests {
     use vec::Vec3;
     use ray::Ray;
-    use scene::shapes::{Shape, Intersected};
+    use scene::shapes::{Shape, Hit};
     use scene::shapes::polyset::PolySet;
     use scene::shapes::poly::Poly;
 
@@ -83,7 +83,7 @@ mod tests {
         let ray = Ray::init(Vec3::init(0.0, SIN_PI_4, 0.0), Vec3::init(0.0, 0.0, -1.0));
 
         match set.intersects(ray) {
-            Intersected(point) => assert_approx_eq(point, 2.292893),
+            Hit(point) => assert_approx_eq(point, 2.292893),
             _ => fail!("Ray should have intersected at {}", 2.292893 as f32)
         }
     }
