@@ -228,7 +228,7 @@ impl<'a> RayTracer<'a> {
             }
         }
 
-        let reflection_light = if ks.scalar() > 0.0 {
+        let reflective_light = if ks.scalar() > 0.0 {
             let ray: Ray = intersection.reflective_ray();
             match scene.intersects(ray) {
                 scene::Intersected(intersection) =>
@@ -239,7 +239,20 @@ impl<'a> RayTracer<'a> {
             Color::new()
         };
 
-        direct_light + ambient_light + reflection_light
+        let refractive_light = if kt > 0.0 {
+            match intersection.refractive_ray() {
+                Some(ray) => match scene.intersects(ray) {
+                    scene::Intersected(intersection) =>
+                        RayTracer::shade_intersection(scene, &intersection, depth - 1).mult(kt),
+                    scene::Missed => Color::new()
+                },
+                None => Color::new()
+            }
+        } else {
+            Color::new()
+        };
+
+        direct_light + ambient_light + reflective_light + refractive_light
     }
 
     pub fn trace_rays(&self) -> BMPimage {
