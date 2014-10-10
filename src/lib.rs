@@ -122,26 +122,24 @@ impl<'a> RayTracer<'a> {
             scene::AreaLight => return Color::new()
         }
 
-        let mut shade: f32 = 0.0;
         let shadow: Ray = Ray::init(ori, dir);
-
         match scene.intersects(shadow) {
             scene::Intersected(intersection) => {
-                if intersection.material().transparency == 0.0 {
+                let material = intersection.material();
+                if material.transparency == 0.0 {
                     match light.kind {
-                        scene::PointLight if ori.distance(intersection.point()) > ori.distance(dest) => {
-                            shade += 1.0; // Intersects with object behind light source
-                        }
-                        _ => () // Hit something before directional light, ignoring area light
+                        scene::PointLight if ori.distance(intersection.point()) > ori.distance(dest) =>
+                            Color::init(1.0, 1.0, 1.0), // Intersects with object behind light source
+                        _ => Color::new() // Hit something before directional light, ignoring area light
                     }
                 } else {
-                    () // Shape is transparent, continue recursively
+                    // Shape is transparent, continue recursively
+                    let shade = material.diffuse.mult(material.transparency);
+                    shade * RayTracer::shadow_scalar(scene, light, &intersection, depth - 1)
                 }
             },
-            scene::Missed => shade += 1.0, // The point is in direct light
+            scene::Missed => Color::init(1.0, 1.0, 1.0) // The point is in direct light
         }
-
-        Color::init(shade, shade, shade)
     }
 
     fn ambient_lightning(kt: f32, ka: Color, cd: Color) -> Color {
