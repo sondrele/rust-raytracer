@@ -50,7 +50,6 @@ impl SceneParser {
 
     fn next_token(&mut self) -> String {
         if self.peaked {
-            // let tkn = self.last_token.unwrap(); <- Hva er denne feilmeldingen?
             let tkn = match self.last_token {
                 Some(ref tkn) => tkn.clone(),
                 None => fail!("The peaked word does not exist")
@@ -66,7 +65,7 @@ impl SceneParser {
                 Err(e) => match e.kind {
                     io::EndOfFile => {
                         self.finished = true;
-                        return buf.as_slice().to_string();
+                        return buf.to_string();
                     },
                     _ => fail!("Read error: {}", e)
                 }
@@ -74,7 +73,7 @@ impl SceneParser {
             if !c.is_whitespace() {
                 buf.push(c);
             } else if buf.len() > 0 {
-                return buf.as_slice().to_string();
+                return buf.to_string();
             }
         }
     }
@@ -101,7 +100,7 @@ impl SceneParser {
 
     fn check_and_consume(&mut self, token: &str) {
         // TODO: Give a nicer error message than this assert?
-        assert_eq!(self.next_token(), token.to_string())
+        assert_eq!(self.next_token().as_slice(), token)
     }
 
     fn parse_f32(&mut self, name: &str) -> f32 {
@@ -122,14 +121,11 @@ impl SceneParser {
     fn parse_light(&mut self) -> Light {
         let keyword = self.next_token();
 
-        let kind = if keyword == "point_light".to_string() {
-            PointLight
-        } else if keyword == "area_light".to_string() {
-            AreaLight
-        } else if keyword == "directional_light".to_string() {
-            DirectionalLight
-        } else {
-            fail!("LightType is not valid: {}", keyword)
+        let kind = match keyword.as_slice() {
+            "point_light" => PointLight,
+            "area_light" => AreaLight,
+            "directional_light" => DirectionalLight,
+            _ => fail!("LightType is not valid: {}", keyword)
         };
 
         self.check_and_consume("{");
@@ -287,14 +283,14 @@ impl SceneParser {
 
         let mut tkn = self.peak();
         while self.has_next_token() {
-            if tkn == "camera".to_string() {
+            if tkn.as_slice() == "camera" {
                 scene.camera = self.parse_camera();
             } else if tkn.as_slice().ends_with("light") {
                 scene.lights.push(self.parse_light());
-            } else if tkn == "sphere".to_string() {
+            } else if tkn.as_slice() == "sphere" {
                 let sphere = self.parse_sphere();
                 scene.shapes.push(box sphere);
-            } else if tkn == "poly_set".to_string() {
+            } else if tkn.as_slice() == "poly_set" {
                 let mut polyset = self.parse_polygon_set();
 
                 for _ in range(0, polyset.polygons.len()) {
@@ -322,9 +318,9 @@ mod test_parser {
     static TEST_PATH : &'static str   = "src/parser/test/testdata-";
 
     fn scene_parser(name: &str) -> SceneParser {
-        let test_name = TEST_PATH.to_string()
-            .append(name)
-            .append(".txt");
+        let mut test_name = TEST_PATH.to_string();
+        test_name.push_str(name);
+        test_name.push_str(".txt");
         SceneParser::new(test_name)
     }
 
@@ -333,22 +329,22 @@ mod test_parser {
         let mut parser = scene_parser("light");
 
         let fst = parser.next_token();
-        assert_eq!("point_light".to_string(), fst);
+        assert_eq!("point_light", fst.as_slice());
 
         let snd = parser.next_token();
-        assert_eq!("{".to_string(), snd);
+        assert_eq!("{", snd.as_slice());
 
         let thrd = parser.next_token();
-        assert_eq!("position".to_string(), thrd);
+        assert_eq!("position", thrd.as_slice());
 
         let frth = parser.next_token();
-        assert_eq!("-1".to_string(), frth);
+        assert_eq!("-1", frth.as_slice());
 
         let mut tkn = "".to_string();
         while parser.has_next_token() {
             tkn = parser.next_token();
         }
-        assert_eq!("}".to_string(), tkn);
+        assert_eq!("}", tkn.as_slice());
     }
 
     #[test]
@@ -356,19 +352,19 @@ mod test_parser {
         let mut parser = scene_parser("light");
 
         let tkn = parser.next_token();
-        assert_eq!("point_light".to_string(), tkn);
+        assert_eq!("point_light", tkn.as_slice());
 
         let tkn = parser.peak();
-        assert_eq!("{".to_string(), tkn);
+        assert_eq!("{", tkn.as_slice());
 
         let tkn = parser.peak();
-        assert_eq!("{".to_string(), tkn);
+        assert_eq!("{", tkn.as_slice());
 
         let tkn = parser.next_token();
-        assert_eq!("{".to_string(), tkn);
+        assert_eq!("{", tkn.as_slice());
 
         let tkn = parser.next_token();
-        assert_eq!("position".to_string(), tkn);
+        assert_eq!("position", tkn.as_slice());
     }
 
     #[test]
