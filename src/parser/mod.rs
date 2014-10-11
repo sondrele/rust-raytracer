@@ -99,22 +99,22 @@ impl SceneParser {
         let _ = self.next_token();
     }
 
-    fn check_and_consume(&mut self, token: &'static str) {
+    fn check_and_consume(&mut self, token: &str) {
         // TODO: Give a nicer error message than this assert?
         assert_eq!(self.next_token(), token.to_string())
     }
 
-    fn parse_f32(&mut self, name: &'static str) -> f32 {
+    fn parse_f32(&mut self, name: &str) -> f32 {
         self.check_and_consume(name);
         self.next_f32()
     }
 
-    fn parse_vec3(&mut self, name: &'static str) -> Vec3 {
+    fn parse_vec3(&mut self, name: &str) -> Vec3 {
         self.check_and_consume(name);
         Vec3::init(self.next_f32(), self.next_f32(), self.next_f32())
     }
 
-    fn parse_color(&mut self, color: &'static str) -> Color {
+    fn parse_color(&mut self, color: &str) -> Color {
         self.check_and_consume(color);
         Color::init(self.next_f32(), self.next_f32(), self.next_f32())
     }
@@ -321,7 +321,7 @@ mod test_parser {
 
     static TEST_PATH : &'static str   = "src/parser/test/testdata-";
 
-    fn scene_parser(name: &'static str) -> SceneParser {
+    fn scene_parser(name: &str) -> SceneParser {
         let test_name = TEST_PATH.to_string()
             .append(name)
             .append(".txt");
