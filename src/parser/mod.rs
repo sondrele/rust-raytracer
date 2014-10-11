@@ -283,24 +283,24 @@ impl SceneParser {
 
         let mut tkn = self.peak();
         while self.has_next_token() {
-            if tkn.as_slice() == "camera" {
-                scene.camera = self.parse_camera();
-            } else if tkn.as_slice().ends_with("light") {
-                scene.lights.push(self.parse_light());
-            } else if tkn.as_slice() == "sphere" {
-                let sphere = self.parse_sphere();
-                scene.shapes.push(box sphere);
-            } else if tkn.as_slice() == "poly_set" {
-                let mut polyset = self.parse_polygon_set();
+            match tkn.as_slice() {
+                "camera" => scene.camera = self.parse_camera(),
+                "sphere" => {
+                    let sphere = self.parse_sphere();
+                    scene.shapes.push(box sphere);
+                },
+                "poly_set" => {
+                    let mut polyset = self.parse_polygon_set();
 
-                for _ in range(0, polyset.polygons.len()) {
-                    match polyset.polygons.pop() {
-                        Some(poly) => scene.shapes.push(box poly),
-                        None => fail!("Incorrect amount of polygons in polyset")
+                    for _ in range(0, polyset.polygons.len()) {
+                        match polyset.polygons.pop() {
+                            Some(poly) => scene.shapes.push(box poly),
+                            None => fail!("Incorrect amount of polygons in polyset")
+                        }
                     }
-                }
-            } else {
-                fail!("Unexpected token: {}", tkn);
+                },
+                token if token.ends_with("light") => scene.lights.push(self.parse_light()),
+                _ => fail!("Unexpected token: {}", tkn)
             }
             tkn = self.peak();
         }
