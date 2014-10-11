@@ -72,7 +72,7 @@ impl SceneParser {
                 }
             };
             if !c.is_whitespace() {
-                buf.push_char(c);
+                buf.push(c);
             } else if buf.len() > 0 {
                 return buf.as_slice().to_string();
             }
@@ -319,13 +319,13 @@ mod test_parser {
     use scene::material::Color;
     use scene::{ Light, PointLight, DirectionalLight, AreaLight };
 
-    static path : &'static str   = "src/parser/test/testdata-";
+    static TEST_PATH : &'static str   = "src/parser/test/testdata-";
 
     fn scene_parser(name: &'static str) -> SceneParser {
-        let name = path.to_string()
+        let test_name = TEST_PATH.to_string()
             .append(name)
             .append(".txt");
-        SceneParser::new(name)
+        SceneParser::new(test_name)
     }
 
     #[test]
