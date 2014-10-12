@@ -105,6 +105,12 @@ impl Vec3 {
         let c = self.z - other.z;
         (a * a + b * b + c * c).sqrt()
     }
+
+    pub fn get_area(a: Vec3, b: Vec3, c: Vec3) -> f32 {
+        let ab = b - a;
+        let ac = c - a;
+        ab.cross(ac).length() * 0.5
+    }
 }
 
 #[test]
