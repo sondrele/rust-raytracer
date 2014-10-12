@@ -1,0 +1,118 @@
+poly_set {
+  name NULL
+  numMaterials 9
+  material {
+    diffColor 0 0 0
+    ambColor 0.2 0.2 0.2
+    specColor 0.12466 0.12466 0.12466
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  material {
+    diffColor 0 0 1
+    ambColor 0.2 0.2 0.2
+    specColor 0.050001 0.050001 0.050001
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  material {
+    diffColor 0 1 0
+    ambColor 0.2 0.2 0.2
+    specColor 0.12534 0.12534 0.12534
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  material {
+    diffColor 0 1 1
+    ambColor 0.2 0.2 0.2
+    specColor 0.27534 0.27534 0.27534
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  material {
+    diffColor 1 0 0
+    ambColor 0.2 0.2 0.2
+    specColor 0.349999 0.349999 0.349999
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  material {
+    diffColor 1 0 1
+    ambColor 0.2 0.2 0.2
+    specColor 0.27466 0.27466 0.27466
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  material {
+    diffColor 1 1 0
+    ambColor 0.2 0.2 0.2
+    specColor 0.12466 0.12466 0.12466
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  material {
+    diffColor 1 1 1
+    ambColor 0.2 0.2 0.2
+    specColor 0.050001 0.050001 0.050001
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  material {
+    diffColor 1 1 1
+    ambColor 0.2 0.2 0.2
+    specColor 0.12534 0.12534 0.12534
+    emisColor 0 0 0
+    shininess 0.2
+    ktran 0
+  }
+  type POLYSET_TRI_MESH
+  normType PER_VERTEX_NORMAL
+  materialBinding PER_VERTEX_MATERIAL
+  hasTextureCoords FALSE
+  rowSize 0
+  numPolys 3
+  poly {
+    numVertices 3
+    pos 1.84161 -3.31604 0.714097
+    norm 0.800103 -0.500001 0.331413
+    materialIndex 0
+    pos 1.96539 -2.81604 0.765367
+    norm 0.92388 0 0.382683
+    materialIndex 1
+    pos 1.53185 -2.81604 1.41421
+    norm 0.707107 -1e-006 0.707107
+    materialIndex 2
+  }
+  poly {
+    numVertices 3
+    pos 1.43711 -3.31604 1.31948
+    norm 0.612372 -0.500001 0.612372
+    materialIndex 3
+    pos 1.84161 -3.31604 0.714097
+    norm 0.800103 -0.500001 0.331413
+    materialIndex 4
+    pos 1.53185 -2.81604 1.41421
+    norm 0.707107 -1e-006 0.707107
+    materialIndex 5
+  }
+  poly {
+    numVertices 3
+    pos 1.96539 -2.81604 0.765367
+    norm 0.92388 0 0.382683
+    materialIndex 6
+    pos 1.84161 -2.31604 0.714097
+    norm 0.800103 0.5 0.331414
+    materialIndex 7
+    pos 1.43711 -2.31604 1.31948
+    norm 0.612373 0.499999 0.612373
+    materialIndex 8
+  }
+}

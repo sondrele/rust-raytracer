@@ -118,6 +118,14 @@ impl SceneParser {
         Color::init(self.next_f32(), self.next_f32(), self.next_f32())
     }
 
+    fn parse_bool(&mut self, name: &str, flag: &str) -> bool {
+        self.check_and_consume(name);
+        match self.next_token() {
+            ref tkn if tkn.as_slice() == flag => true,
+            _ => false
+        }
+    }
+
     fn parse_light(&mut self) -> Light {
         let keyword = self.next_token();
 
@@ -200,7 +208,28 @@ impl SceneParser {
         sphere
     }
 
-    fn parse_polygon(&mut self) -> Poly {
+    fn parse_vertex(&mut self, has_normal: bool, has_material: bool) -> Vertex {
+        let mut vertex = Vertex::init(self.parse_vec3("pos"));
+
+        match has_normal {
+            true => {
+                vertex.normal = self.parse_vec3("norm");
+                vertex.has_normal = true;
+            },
+            false => ()
+        }
+
+        match has_material {
+            true => {
+                self.check_and_consume("materialIndex");
+                vertex.mat_index = self.next_i32() as u32;
+            },
+            false => ()
+        }
+        vertex
+    }
+
+    fn parse_polygon(&mut self, has_normal: bool, has_material: bool) -> Poly {
         self.check_and_consume("poly");
         self.check_and_consume("{");
         self.check_and_consume("numVertices");
@@ -209,12 +238,12 @@ impl SceneParser {
         let poly = Poly {
             materials: Vec::new(),
             vertices: [
-                Vertex::init(self.parse_vec3("pos")),
-                Vertex::init(self.parse_vec3("pos")),
-                Vertex::init(self.parse_vec3("pos"))
+                self.parse_vertex(has_normal, has_material),
+                self.parse_vertex(has_normal, has_material),
+                self.parse_vertex(has_normal, has_material)
             ],
-            vertex_material: false,
-            vertex_normal: false
+            vertex_material: has_material,
+            vertex_normal: has_normal
         };
         self.check_and_consume("}");
         poly
@@ -237,19 +266,18 @@ impl SceneParser {
 
         self.check_and_consume("type");
         self.consume_next(); // TODO: Use this field later
-        self.check_and_consume("normType");
-        self.consume_next(); // TODO: Use this field later
-        self.check_and_consume("materialBinding");
-        self.consume_next(); // TODO: Use this field later
+        let per_vertex_normal = self.parse_bool("normType", "PER_VERTEX_NORMAL");
+        let material_binding = self.parse_bool("materialBinding", "PER_VERTEX_MATERIAL");
         self.check_and_consume("hasTextureCoords");
-        self.consume_next(); // TODO: Use this field later
+        self.consume_next(); // TODO: This field is probably never used
         self.check_and_consume("rowSize");
         self.consume_next(); // TODO: This field is probably never used
         self.check_and_consume("numPolys");
 
         let mut num_polys = self.next_i32();
         while num_polys > 0 {
-            let mut poly = self.parse_polygon();
+            let mut poly = self.parse_polygon(per_vertex_normal, material_binding);
+            // let (i0, i1, i2) = (poly[0].mat_index, poly[1].mat_index, poly[2].mat_index);
             poly.materials.push(polyset.materials[0].clone());
             polyset.polygons.push(poly);
             num_polys -= 1;
@@ -437,7 +465,7 @@ mod test_parser {
     #[test]
     fn can_parse_polygon() {
         let mut parser = scene_parser("polygon");
-        let poly = parser.parse_polygon();
+        let poly = parser.parse_polygon(false, false);
         assert_eq!(poly[0][0], 0.0);
         assert_eq!(poly[1][0], 0.5);
         assert_eq!(poly[2][0], 10.0);
@@ -449,6 +477,23 @@ mod test_parser {
         let polyset = parser.parse_polygon_set();
         assert_eq!(polyset.materials.len(), 1);
         assert_eq!(polyset.polygons.len(), 12);
+    }
+
+    #[test]
+    fn can_parse_per_vertex_polygonset() {
+        let mut parser = scene_parser("per-vertex-polyset");
+        let polyset = parser.parse_polygon_set();
+        assert_eq!(polyset.materials.len(), 9);
+        assert_eq!(polyset.polygons.len(), 3);
+
+        let ref poly0 = polyset.polygons[0];
+        assert_eq!(poly0.vertex_material, true);
+        assert_eq!(poly0.vertex_normal, true);
+
+        assert_eq!(poly0.materials.len(), 3);
+        assert_eq!(poly0.materials[0].diffuse, Color::init(0.0, 0.0, 0.0));
+        assert_eq!(poly0.materials[1].diffuse, Color::init(0.0, 0.0, 1.0));
+        assert_eq!(poly0.materials[2].diffuse, Color::init(0.0, 1.0, 1.0));
     }
 
     #[test]
