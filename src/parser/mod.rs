@@ -540,10 +540,11 @@ mod test_parser {
         let ref poly2 = polyset.polygons[2];
         assert_eq!(poly2.vertex_material, true);
         assert_eq!(poly2.vertex_normal, true);
-        assert_eq!(poly2.materials.len(), 1);
+        assert_eq!(poly2.materials.len(), 2);
         assert_eq!(poly2.materials[0].diffuse, Color::init(1.0, 0.0, 1.0));
         assert_eq!(poly2[0].mat_index, 0);
-        assert_eq!(poly2[1].mat_index, 0);
+        assert_eq!(poly2.materials[1].diffuse, Color::init(1.0, 0.0, 0.0));
+        assert_eq!(poly2[1].mat_index, 1);
         assert_eq!(poly2[2].mat_index, 0);
     }
 
