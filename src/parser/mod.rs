@@ -277,8 +277,33 @@ impl SceneParser {
         let mut num_polys = self.next_i32();
         while num_polys > 0 {
             let mut poly = self.parse_polygon(per_vertex_normal, material_binding);
-            // let (i0, i1, i2) = (poly[0].mat_index, poly[1].mat_index, poly[2].mat_index);
-            poly.materials.push(polyset.materials[0].clone());
+
+            match material_binding {
+                true => {
+                    let (i0, i1, i2) = (poly[0].mat_index, poly[1].mat_index, poly[2].mat_index);
+                    poly.materials.push(polyset.materials[i0 as uint].clone());
+                    poly.vertices[0].mat_index = poly.materials.len() as u32 - 1;
+
+                    if i1 != i0 {
+                        poly.materials.push(polyset.materials[i1 as uint].clone());
+                        poly.vertices[1].mat_index = poly.materials.len() as u32 - 1;
+                    } else {
+                        poly.vertices[1].mat_index = 0;
+                    }
+
+                    if i2 != i1 && i2 != i0 {
+                        poly.materials.push(polyset.materials[i2 as uint].clone());
+                        poly.vertices[2].mat_index = poly.materials.len() as u32 - 1;
+                    } else if i2 == i1 && i2 != i0 {
+                        poly.vertices[2].mat_index = 1;
+                    } else {
+                        poly.vertices[2].mat_index = 0;
+                    }
+                },
+                false => {
+                    poly.materials.push(polyset.materials[0].clone())
+                }
+            }
             polyset.polygons.push(poly);
             num_polys -= 1;
         }
@@ -477,23 +502,49 @@ mod test_parser {
         let polyset = parser.parse_polygon_set();
         assert_eq!(polyset.materials.len(), 1);
         assert_eq!(polyset.polygons.len(), 12);
+
+        let ref poly0 = polyset.polygons[0];
+        assert_eq!(poly0.vertex_material, false);
+        assert_eq!(poly0.vertex_normal, false);
+        assert_eq!(poly0.materials.len(), 1);
     }
 
     #[test]
     fn can_parse_per_vertex_polygonset() {
         let mut parser = scene_parser("per-vertex-polyset");
         let polyset = parser.parse_polygon_set();
-        assert_eq!(polyset.materials.len(), 9);
+        assert_eq!(polyset.materials.len(), 6);
         assert_eq!(polyset.polygons.len(), 3);
 
         let ref poly0 = polyset.polygons[0];
         assert_eq!(poly0.vertex_material, true);
         assert_eq!(poly0.vertex_normal, true);
-
         assert_eq!(poly0.materials.len(), 3);
         assert_eq!(poly0.materials[0].diffuse, Color::init(0.0, 0.0, 0.0));
+        assert_eq!(poly0[0].mat_index, 0);
         assert_eq!(poly0.materials[1].diffuse, Color::init(0.0, 0.0, 1.0));
-        assert_eq!(poly0.materials[2].diffuse, Color::init(0.0, 1.0, 1.0));
+        assert_eq!(poly0[1].mat_index, 1);
+        assert_eq!(poly0.materials[2].diffuse, Color::init(0.0, 1.0, 0.0));
+        assert_eq!(poly0[2].mat_index, 2);
+
+        let ref poly1 = polyset.polygons[1];
+        assert_eq!(poly1.vertex_material, true);
+        assert_eq!(poly1.vertex_normal, true);
+        assert_eq!(poly1.materials.len(), 2);
+        assert_eq!(poly1.materials[0].diffuse, Color::init(0.0, 1.0, 1.0));
+        assert_eq!(poly1[0].mat_index, 0);
+        assert_eq!(poly1[1].mat_index, 0);
+        assert_eq!(poly1.materials[1].diffuse, Color::init(1.0, 0.0, 0.0));
+        assert_eq!(poly1[2].mat_index, 1);
+
+        let ref poly2 = polyset.polygons[2];
+        assert_eq!(poly2.vertex_material, true);
+        assert_eq!(poly2.vertex_normal, true);
+        assert_eq!(poly2.materials.len(), 1);
+        assert_eq!(poly2.materials[0].diffuse, Color::init(1.0, 0.0, 1.0));
+        assert_eq!(poly2[0].mat_index, 0);
+        assert_eq!(poly2[1].mat_index, 0);
+        assert_eq!(poly2[2].mat_index, 0);
     }
 
     #[test]
