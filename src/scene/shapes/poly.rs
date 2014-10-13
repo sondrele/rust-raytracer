@@ -79,31 +79,7 @@ impl Poly {
         poly
     }
 
-    fn get_color(&self, point: Vec3) -> Color {
-        match self.vertex_material {
-            false => self.materials[0].diffuse,
-            true => {
-                let area = Vec3::get_area(self[0].position, self[1].position, self[2].position);
-                let area0 = Vec3::get_area(self[0].position, self[1].position, point) / area;
-                let area1 = Vec3::get_area(self[2].position, self[0].position, point) / area;
-                let area2 = Vec3::get_area(self[1].position, self[2].position, point) / area;
-
-                if area0 > 1.0 || area1 > 1.0 || area2 > 1.0 {
-                    fail!("Cannot get area, as point is outside of poly")
-                }
-
-                self.materials[0].diffuse.mult(area2) + self.materials[1].diffuse.mult(area1) + self.materials[2].diffuse.mult(area0)
-            }
-        }
-    }
-
-    fn static_normal(&self) -> Vec3 {
-        let v = self[1].position - self[0].position;
-        let w = self[2].position - self[0].position;
-        v.cross(w)
-    }
-
-    fn interpolated_normal(&self, point: Vec3) -> Vec3 {
+    fn interpolated_areas(&self, point: Vec3) -> (f32, f32, f32) {
         let area = Vec3::get_area(self[0].position, self[1].position, self[2].position);
         let area0 = Vec3::get_area(self[0].position, self[1].position, point) / area;
         let area1 = Vec3::get_area(self[2].position, self[0].position, point) / area;
@@ -113,6 +89,22 @@ impl Poly {
             fail!("Cannot get area, as point is outside of poly")
         }
 
+        (area0, area1, area2)
+    }
+
+    fn interpolated_color(&self, point: Vec3) -> Color {
+        let (area0, area1, area2) = self.interpolated_areas(point);
+        self.materials[0].diffuse.mult(area2) + self.materials[1].diffuse.mult(area1) + self.materials[2].diffuse.mult(area0)
+    }
+
+    fn static_normal(&self) -> Vec3 {
+        let v = self[1].position - self[0].position;
+        let w = self[2].position - self[0].position;
+        v.cross(w)
+    }
+
+    fn interpolated_normal(&self, point: Vec3) -> Vec3 {
+        let (area0, area1, area2) = self.interpolated_areas(point);
         self[0].normal.mult(area2) + self[1].normal.mult(area1) + self[2].normal.mult(area0)
     }
 }
@@ -156,8 +148,8 @@ impl Shape for Poly {
 
         match t > 0.0000001 {
             true => shapes::Hit(t), // ray intersection
-            false => shapes::Missed         // this means that there is a line intersection
-                                    // but not a ray intersection
+            false => shapes::Missed // this means that there is
+            // a line intersection but not a ray intersection
         }
     }
 
@@ -179,7 +171,10 @@ impl Shape for Poly {
     }
 
     fn diffuse_color(&self, point: Vec3) -> Color {
-        self.get_color(point)
+        match self.vertex_material {
+            true => self.interpolated_color(point),
+            false => self.materials[0].diffuse
+        }
     }
 }
 

@@ -27,7 +27,7 @@ impl<'a> Intersection<'a> {
     }
 
     pub fn color(&self) -> material::Color {
-        self.shape.get_material().diffuse
+        self.shape.diffuse_color(self.point())
     }
 
     pub fn material(&self) -> material::Material {
@@ -77,9 +77,5 @@ impl<'a> Intersection<'a> {
             ray.switch_medium();
             Some(ray)
         }
-    }
-
-    pub fn diffuse_color(&self) -> material::Color {
-        self.shape.diffuse_color(self.point())
     }
 }
