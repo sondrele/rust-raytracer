@@ -1,6 +1,6 @@
 use vec::Vec3;
 use ray::Ray;
-use scene::material::Material;
+use scene::material::{Material, Color};
 use scene::shapes;
 use scene::shapes::{Shape, ShapeIntersection};
 use std::fmt;
@@ -77,6 +77,24 @@ impl Poly {
         let mut poly = Poly::new();
         poly.materials = vec!(Material::new());
         poly
+    }
+
+    fn get_color(&self, point: Vec3) -> Color {
+        match self.vertex_material {
+            false => self.materials[0].diffuse,
+            true => {
+                let area = Vec3::get_area(self[0].position, self[1].position, self[2].position);
+                let area0 = Vec3::get_area(self[0].position, self[1].position, point) / area;
+                let area1 = Vec3::get_area(self[2].position, self[0].position, point) / area;
+                let area2 = Vec3::get_area(self[1].position, self[2].position, point) / area;
+
+                if area0 > 1.0 || area1 > 1.0 || area2 > 1.0 {
+                    fail!("Cannot get area, as point is outside of poly")
+                }
+
+                self.materials[0].diffuse.mult(area2) + self.materials[1].diffuse.mult(area1) + self.materials[2].diffuse.mult(area0)
+            }
+        }
     }
 
     fn static_normal(&self) -> Vec3 {
@@ -158,6 +176,10 @@ impl Shape for Poly {
             normal = normal.invert();
         }
         normal
+    }
+
+    fn diffuse_color(&self, point: Vec3) -> Color {
+        self.get_color(point)
     }
 }
 

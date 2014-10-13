@@ -78,4 +78,8 @@ impl<'a> Intersection<'a> {
             Some(ray)
         }
     }
+
+    pub fn diffuse_color(&self) -> material::Color {
+        self.shape.diffuse_color(self.point())
+    }
 }

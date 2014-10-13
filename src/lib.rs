@@ -134,7 +134,7 @@ impl<'a> RayTracer<'a> {
                     }
                 } else {
                     // Shape is transparent, continue recursively
-                    let shade = material.diffuse.mult(material.transparency);
+                    let shade = intersection.diffuse_color().mult(material.transparency);
                     shade * RayTracer::shadow_scalar(scene, light, &intersection, depth - 1)
                 }
             },
@@ -175,7 +175,7 @@ impl<'a> RayTracer<'a> {
         let point: Vec3 = intersection.point();
         let material = intersection.material();
         let kt: f32 = material.transparency;
-        let cd: Color = material.diffuse;
+        let cd: Color = intersection.diffuse_color();
         let ks: Color = material.specular;
         let q: f32 = material.shininess * 128.0;
 
@@ -213,7 +213,7 @@ impl<'a> RayTracer<'a> {
         let kt: f32 = material.transparency;
         let ks: Color = material.specular;
         let ka: Color = material.ambient;
-        let cd: Color = material.diffuse;
+        let cd: Color = intersection.diffuse_color();
 
         let ambient_light: Color = RayTracer::ambient_lightning(kt, ka, cd);
 
