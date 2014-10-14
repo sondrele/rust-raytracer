@@ -14,31 +14,19 @@ impl PartialEq for Vec3 {
 
 impl Add<Vec3, Vec3> for Vec3 {
     fn add(&self, vec: &Vec3) -> Vec3 {
-        Vec3{
-            x: self.x + vec.x,
-            y: self.y + vec.y,
-            z: self.z + vec.z,
-        }
+        Vec3::init(self.x + vec.x, self.y + vec.y, self.z + vec.z)
     }
 }
 
 impl Sub<Vec3, Vec3> for Vec3 {
     fn sub(&self, vec: &Vec3) -> Vec3 {
-        Vec3{
-            x: self.x - vec.x,
-            y: self.y - vec.y,
-            z: self.z - vec.z,
-        }
+        Vec3::init(self.x - vec.x, self.y - vec.y, self.z - vec.z)
     }
 }
 
 impl Mul<Vec3, Vec3> for Vec3 {
     fn mul(&self, vec: &Vec3) -> Vec3 {
-        Vec3{
-            x: self.x * vec.x,
-            y: self.y * vec.y,
-            z: self.z * vec.z,
-        }
+        Vec3::init(self.x * vec.x, self.y * vec.y, self.z * vec.z)
     }
 }
 
@@ -59,7 +47,11 @@ impl Vec3 {
     }
 
     pub fn init(x: f32, y: f32, z: f32) -> Vec3 {
-        Vec3{ x: x, y: y, z: z}
+        Vec3 {
+            x: x,
+            y: y,
+            z: z
+        }
     }
 
     pub fn length(&self) -> f32 {
@@ -67,11 +59,7 @@ impl Vec3 {
     }
 
     pub fn mult(&self, num: f32) -> Vec3 {
-        Vec3{
-            x: self.x * num,
-            y: self.y * num,
-            z: self.z * num,
-        }
+        Vec3::init(self.x * num, self.y * num, self.z * num)
     }
 
     pub fn normalize(&mut self) {
@@ -84,11 +72,10 @@ impl Vec3 {
     }
 
     pub fn cross(&self, vec: Vec3) -> Vec3 {
-        Vec3{
-            x: self.y * vec.z - self.z * vec.y,
-            y: self.z * vec.x - self.x * vec.z,
-            z: self.x * vec.y - self.y * vec.x
-        }
+        let x = self.y * vec.z - self.z * vec.y;
+        let y = self.z * vec.x - self.x * vec.z;
+        let z = self.x * vec.y - self.y * vec.x;
+        Vec3::init(x, y, z)
     }
 
     pub fn dot(&self, other: Vec3) -> f32 {
@@ -113,29 +100,29 @@ impl Vec3 {
     }
 }
 
-#[test]
-fn vec3_can_be_addded(){
-    let a = Vec3{x: 0f32, y: 1f32, z: 2f32};
-    let b = Vec3{x: 0f32, y: 1f32, z: 2f32};
-    let c = a + b;
-    assert_eq!(c.x, 0f32);
-    assert_eq!(c.y, 2f32);
-    assert_eq!(c.z, 4f32);
-}
-
-#[test]
-fn vec3_can_be_subtracted(){
-    let a = Vec3{x: 0f32, y: 1f32, z: 2f32};
-    let b = Vec3{x: 0f32, y: 1f32, z: 2f32};
-    let c = a - b;
-    assert_eq!(c.x, 0f32);
-    assert_eq!(c.y, 0f32);
-    assert_eq!(c.z, 0f32);
-}
-
 #[cfg(test)]
 mod tests {
     use vec::Vec3;
+
+    #[test]
+    fn vec3_can_be_addded(){
+        let a = Vec3{x: 0f32, y: 1f32, z: 2f32};
+        let b = Vec3{x: 0f32, y: 1f32, z: 2f32};
+        let c = a + b;
+        assert_eq!(c.x, 0f32);
+        assert_eq!(c.y, 2f32);
+        assert_eq!(c.z, 4f32);
+    }
+
+    #[test]
+    fn vec3_can_be_subtracted(){
+        let a = Vec3{x: 0f32, y: 1f32, z: 2f32};
+        let b = Vec3{x: 0f32, y: 1f32, z: 2f32};
+        let c = a - b;
+        assert_eq!(c.x, 0f32);
+        assert_eq!(c.y, 0f32);
+        assert_eq!(c.z, 0f32);
+    }
 
     #[test]
     fn vec3_can_be_multiplied(){

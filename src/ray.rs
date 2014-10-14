@@ -18,11 +18,10 @@ impl Ray {
     }
 
     pub fn init(ori: Vec3, dir: Vec3) -> Ray {
-        Ray {
-            ori: ori,
-            dir: dir,
-            vacuum: Cell::new(true)
-        }
+        let mut ray = Ray::new();
+        ray.ori = ori;
+        ray.dir = dir;
+        ray
     }
 
     pub fn switch_medium(&self) {
@@ -37,9 +36,15 @@ impl Ray {
     }
 }
 
-#[test]
-fn can_init_ray() {
-    let r = Ray::init(Vec3::init(0.0, 1.0, 2.0), Vec3::init(2.0, 1.0, 0.0));
-    assert_eq!(r.ori[2], 2.0);
-    assert_eq!(r.dir[2], 0.0);
+#[cfg(test)]
+mod tests {
+    use vec::Vec3;
+    use ray::Ray;
+
+    #[test]
+    fn can_init_ray() {
+        let r = Ray::init(Vec3::init(0.0, 1.0, 2.0), Vec3::init(2.0, 1.0, 0.0));
+        assert_eq!(r.ori[2], 2.0);
+        assert_eq!(r.dir[2], 0.0);
+    }
 }
