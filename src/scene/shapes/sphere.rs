@@ -31,18 +31,13 @@ impl Sphere {
             zlength: 0.0
         }
     }
+
     pub fn init(origin: Vec3, radius: f32) -> Sphere {
-        Sphere{
-            materials: vec!(Material::new()),
-            origin: origin,
-            radius: radius,
-            xaxis: Vec3::new(),
-            xlength: 0.0,
-            yaxis: Vec3::new(),
-            ylength: 0.0,
-            zaxis: Vec3::new(),
-            zlength: 0.0
-        }
+        let mut sphere = Sphere::new();
+        sphere.materials = vec!(Material::new());
+        sphere.origin = origin;
+        sphere.radius = radius;
+        sphere
     }
 }
 

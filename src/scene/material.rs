@@ -44,7 +44,7 @@ impl Color {
         self.b = b;
     }
 
-    pub fn b_val(&self) -> f32{
+    pub fn b_val(&self) -> f32 {
         self.b
     }
 
@@ -100,14 +100,9 @@ impl Material {
     }
 
     pub fn init(diffuse: Color) -> Material {
-        Material{
-            diffuse: diffuse,
-            ambient: Color::new(),
-            specular: Color::new(),
-            emissive: Color::new(),
-            shininess: 0.0,
-            transparency: 0.0
-        }
+        let mut material = Material::new();
+        material.diffuse = diffuse;
+        material
     }
 
     pub fn is_reflective(&self) -> bool {
@@ -121,7 +116,7 @@ impl Material {
 
 #[cfg(test)]
 mod tests {
-    use scene::material::{ Color, Material };
+    use scene::material::{Color, Material};
     #[test]
     fn color_is_0(){
         let c = Color::new();

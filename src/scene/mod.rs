@@ -75,6 +75,7 @@ impl<'a> Scene<'a> {
             shapes: Vec::new()
         }
     }
+
     pub fn intersects(&'a self, ray: Ray) -> SceneIntersection {
         let mut intersection = Missed;
         let mut point: f32 = 0.0;
@@ -92,7 +93,7 @@ impl<'a> Scene<'a> {
                     point = new_point;
                     intersection = Intersected(Intersection::new(point, ray, shape));
                 },
-                _ => () // TODO: Match for per_vertex_color
+                _ => ()
             }
         }
 
