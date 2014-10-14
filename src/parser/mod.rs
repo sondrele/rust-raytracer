@@ -1,5 +1,7 @@
 use std::io;
 use std::io::{BufferedReader, File};
+use std::from_str::FromStr;
+
 use vec::Vec3;
 use scene::{Scene, Camera, Light, PointLight, DirectionalLight, AreaLight};
 use scene::material::{Material, Color};
@@ -58,6 +60,7 @@ impl SceneParser {
             self.peaked = false;
             return tkn;
         }
+
         let mut buf = String::new();
         loop {
             let c = match self.reader.read_byte() {
@@ -78,19 +81,11 @@ impl SceneParser {
         }
     }
 
-    fn next_f32(&mut self) -> f32 {
+    fn next_num<T:FromStr>(&mut self) -> T {
         let tkn = self.next_token();
-        match from_str::<f32>(tkn.as_slice()) {
+        match from_str::<T>(tkn.as_slice()) {
             Some(f) => f,
-            None => fail!("Token '{}' can not be parsed as f32", tkn)
-        }
-    }
-
-    fn next_i32(&mut self) -> i32 {
-        let tkn = self.next_token();
-        match from_str::<i32>(tkn.as_slice()) {
-            Some(f) => f,
-            None => fail!("Token '{}' can not be parsed as i32", tkn)
+            None => fail!("Token '{}'", tkn)
         }
     }
 
@@ -105,17 +100,17 @@ impl SceneParser {
 
     fn parse_f32(&mut self, name: &str) -> f32 {
         self.check_and_consume(name);
-        self.next_f32()
+        self.next_num()
     }
 
     fn parse_vec3(&mut self, name: &str) -> Vec3 {
         self.check_and_consume(name);
-        Vec3::init(self.next_f32(), self.next_f32(), self.next_f32())
+        Vec3::init(self.next_num(), self.next_num(), self.next_num())
     }
 
     fn parse_color(&mut self, color: &str) -> Color {
         self.check_and_consume(color);
-        Color::init(self.next_f32(), self.next_f32(), self.next_f32())
+        Color::init(self.next_num(), self.next_num(), self.next_num())
     }
 
     fn parse_bool(&mut self, name: &str, flag: &str) -> bool {
@@ -187,7 +182,7 @@ impl SceneParser {
         self.consume_next();
         self.check_and_consume("numMaterials");
 
-        let mut num_materials = self.next_i32();
+        let mut num_materials: i32 = self.next_num();
         let mut sphere = Sphere::new();
         while num_materials > 0 {
             let material = self.parse_material();
@@ -222,7 +217,7 @@ impl SceneParser {
         match has_material {
             true => {
                 self.check_and_consume("materialIndex");
-                vertex.mat_index = self.next_i32() as u32;
+                vertex.mat_index = self.next_num();
             },
             false => ()
         }
@@ -257,7 +252,7 @@ impl SceneParser {
         self.check_and_consume("numMaterials");
 
         let mut polyset = PolySet::new();
-        let mut num_materials = self.next_i32();
+        let mut num_materials: i32 = self.next_num();
         while num_materials > 0 {
             let material = self.parse_material();
             polyset.materials.push(material);
@@ -274,7 +269,7 @@ impl SceneParser {
         self.consume_next(); // TODO: This field is probably never used
         self.check_and_consume("numPolys");
 
-        let mut num_polys = self.next_i32();
+        let mut num_polys: i32 = self.next_num();
         while num_polys > 0 {
             let mut poly = self.parse_polygon(per_vertex_normal, material_binding);
 
@@ -423,10 +418,10 @@ mod test_parser {
     #[test]
     fn can_parse_f32() {
         let mut parser = scene_parser("f32");
-        let fst = parser.next_f32();
+        let fst: f32 = parser.next_num();
         assert_eq!(1.5, fst);
 
-        let snd = parser.next_f32();
+        let snd: f32 = parser.next_num();
         assert_eq!(-0.5, snd);
     }
 
