@@ -1,12 +1,12 @@
 extern crate bmp;
 
-use scene::{Scene, Light};
-use scene::intersection::Intersection;
-use scene::material::Color;
+use bmp::BMPimage;
+
 use vec::Vec3;
 use ray::Ray;
-
-use bmp::BMPimage;
+use scene::{Scene, Light};
+use scene::material::Color;
+use scene::intersection::Intersection;
 
 pub mod vec;
 pub mod ray;
@@ -45,18 +45,11 @@ impl<'a> RayTracer<'a> {
     }
 
     pub fn init(width: uint, height: uint, depth: uint) -> RayTracer<'a> {
-        RayTracer {
-            width: width,
-            height: height,
-            depth: depth,
-            center: Vec3::new(),
-            camera_pos: Vec3::new(),
-            parallel_up: Vec3::new(),
-            parallel_right: Vec3::new(),
-            vertical_fov: 0.0,
-            horizontal_fov: 0.0,
-            scene: None
-        }
+        let mut raytracer = RayTracer::new();
+        raytracer.width = width;
+        raytracer.height = height;
+        raytracer.depth = depth;
+        raytracer
     }
 
     pub fn set_scene(&mut self, scene: Scene) {
@@ -106,23 +99,23 @@ impl<'a> RayTracer<'a> {
         }
 
         let dest: Vec3 = light.pos;
-        let mut ori: Vec3 = intersection.point();
-        let mut dir: Vec3;
-
-        match light.kind {
+        let (ori, dir) = match light.kind {
             scene::DirectionalLight => {
-                dir = light.dir.invert();
-                ori = ori + dir.mult(0.0001);
+                let dir = light.dir.invert();
+                let ori = intersection.point() + dir.mult(0.0001);
+                (ori, dir)
             },
             scene::PointLight => {
-                dir = dest - ori;
+                let mut ori = intersection.point();
+                let mut dir = dest - ori;
                 dir.normalize();
                 ori = ori + dir.mult(0.0001);
+                (ori, dir)
             },
             scene::AreaLight => return Color::new()
-        }
+        };
 
-        let shadow: Ray = Ray::init(ori, dir);
+        let shadow = Ray::init(ori, dir);
         match scene.intersects(shadow) {
             scene::Intersected(intersection) => {
                 let material = intersection.material();
@@ -132,8 +125,7 @@ impl<'a> RayTracer<'a> {
                             Color::init(1.0, 1.0, 1.0), // Intersects with object behind light source
                         _ => Color::new() // Hit something before directional light, ignoring area light
                     }
-                } else {
-                    // Shape is transparent, continue recursively
+                } else { // Shape is transparent, continue recursively
                     let shade = intersection.color().mult(material.transparency);
                     shade * RayTracer::shadow_scalar(scene, light, &intersection, depth - 1)
                 }
@@ -159,7 +151,6 @@ impl<'a> RayTracer<'a> {
     fn diffuse_lightning(kt: f32, cd: Color, normal: Vec3, dj: Vec3) -> Color {
         let a: f32 = 1.0 - kt;
         let b: f32 = (0.0 as f32).max(normal.dot(dj));
-
         cd.mult(a * b)
     }
 
@@ -296,8 +287,7 @@ mod tests {
     }
 
     fn assert_approx_eq(a: f32, b: f32) {
-        assert!((a - b).abs() < 1.0e-6,
-                "{} is not approximately equal to {}", a, b);
+        assert!((a - b).abs() < 1.0e-6, "{} is not approximately equal to {}", a, b);
     }
 
     #[test]

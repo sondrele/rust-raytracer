@@ -196,8 +196,7 @@ mod tests {
     use scene::shapes::poly::{Poly, Vertex};
 
     fn assert_approx_eq(a: f32, b: f32) {
-        assert!((a - b).abs() < 1.0e-6,
-                "{} is not approximately equal to {}", a, b);
+        assert!((a - b).abs() < 1.0e-6, "{} is not approximately equal to {}", a, b);
     }
 
     #[test]
