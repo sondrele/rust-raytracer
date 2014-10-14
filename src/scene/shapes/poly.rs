@@ -44,19 +44,18 @@ impl Index<u32, f32> for Vertex {
     }
 }
 
+impl fmt::Show for [Vertex, ..3] {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{} {} {}]", self[0], self[1], self[2])
+    }
+}
+
 #[deriving(Show)]
 pub struct Poly {
     pub materials: Vec<Material>,
     pub vertices: [Vertex, ..3],
     pub vertex_material: bool,
     pub vertex_normal: bool
-}
-
-
-impl fmt::Show for [Vertex, ..3] {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "[{} {} {}]", self[0], self[1], self[2])
-    }
 }
 
 impl Poly {
@@ -79,7 +78,7 @@ impl Poly {
         poly
     }
 
-    fn interpolated_areas(&self, point: Vec3) -> (f32, f32, f32) {
+    fn weighted_areas(&self, point: Vec3) -> (f32, f32, f32) {
         let area = Vec3::get_area(self[0].position, self[1].position, self[2].position);
         let area0 = Vec3::get_area(self[0].position, self[1].position, point) / area;
         let area1 = Vec3::get_area(self[2].position, self[0].position, point) / area;
@@ -93,7 +92,7 @@ impl Poly {
     }
 
     fn interpolated_color(&self, point: Vec3) -> Color {
-        let (area0, area1, area2) = self.interpolated_areas(point);
+        let (area0, area1, area2) = self.weighted_areas(point);
         self.materials[0].diffuse.mult(area2) + self.materials[1].diffuse.mult(area1) + self.materials[2].diffuse.mult(area0)
     }
 
@@ -104,8 +103,19 @@ impl Poly {
     }
 
     fn interpolated_normal(&self, point: Vec3) -> Vec3 {
-        let (area0, area1, area2) = self.interpolated_areas(point);
+        let (area0, area1, area2) = self.weighted_areas(point);
         self[0].normal.mult(area2) + self[1].normal.mult(area1) + self[2].normal.mult(area0)
+    }
+}
+
+impl Index<u32, Vertex> for Poly {
+    fn index<'a>(&'a self, index: &u32) -> &'a Vertex {
+        match index {
+            &0 => &self.vertices[0],
+            &1 => &self.vertices[1],
+            &2 => &self.vertices[2],
+            _ => fail!("Index out of bound: {}", index)
+        }
     }
 }
 
@@ -178,20 +188,17 @@ impl Shape for Poly {
     }
 }
 
-impl Index<u32, Vertex> for Poly {
-    fn index<'a>(&'a self, index: &u32) -> &'a Vertex {
-        match index {
-            &0 => &self.vertices[0],
-            &1 => &self.vertices[1],
-            &2 => &self.vertices[2],
-            _ => fail!("Index out of bound: {}", index)
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use ray::Ray;
+    use vec::Vec3;
+    use scene::shapes::{Shape, Hit};
     use scene::shapes::poly::{Poly, Vertex};
+
+    fn assert_approx_eq(a: f32, b: f32) {
+        assert!((a - b).abs() < 1.0e-6,
+                "{} is not approximately equal to {}", a, b);
+    }
 
     #[test]
     fn can_init_vertex() {
@@ -203,5 +210,20 @@ mod tests {
     fn can_init_polygon() {
         let p = Poly::new();
         assert_eq!(p.vertex_material, false);
+    }
+    static SIN_PI_4: f32 = 0.7071067812;
+
+    #[test]
+    fn can_intersect_poly() {
+        let mut poly = Poly::init();
+        poly.vertices[0].position = Vec3::init(2.0, 0.0, -3.0);
+        poly.vertices[1].position = Vec3::init(-2.0, 0.0, -3.0);
+        poly.vertices[2].position = Vec3::init(0.0, 2.0, -1.0);
+        let ray = Ray::init(Vec3::init(0.0, SIN_PI_4, 0.0), Vec3::init(0.0, 0.0, -1.0));
+
+        match poly.intersects(ray) {
+            Hit(point) => assert_approx_eq(point, 2.292893),
+            _ => fail!("Ray should have intersected at {}", 2.292893 as f32)
+        }
     }
 }
