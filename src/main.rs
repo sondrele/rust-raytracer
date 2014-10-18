@@ -1,8 +1,9 @@
 extern crate rstracer;
 extern crate getopts;
 
-use getopts::{Matches, optopt,optflag,getopts,OptGroup, usage};
 use std::os;
+use std::from_str::FromStr;
+use getopts::{Matches, optopt, optflag, getopts, OptGroup};
 
 use rstracer::RayTracer;
 use rstracer::parser::SceneParser;
@@ -11,15 +12,15 @@ fn parse_command_line(program: &str, args: &[String], opts: &[OptGroup]) -> Matc
     match getopts(args, opts) {
         Ok(m) => m,
         Err(f) => {
-            println!("{}", usage(program, opts));
+            println!("{}", getopts::usage(program, opts));
             fail!(f.to_string())
         }
     }
 }
 
-fn get_opt(matches: &Matches, opt: &str, default: uint) -> uint {
+fn get_opt<T:FromStr>(matches: &Matches, opt: &str, default: T) -> T {
     match matches.opt_str(opt) {
-        Some(opt_str) => from_str::<uint>(opt_str.as_slice()).unwrap_or(default),
+        Some(opt_str) => from_str::<T>(opt_str.as_slice()).unwrap_or(default),
         None => default
     }
 }
@@ -50,7 +51,7 @@ fn main() {
     ];
     let matches = parse_command_line(program, args.tail(), opts);
     if matches.opt_present("h") {
-        println!("{}", usage(program, opts));
+        println!("{}", getopts::usage(program, opts));
         return;
     }
 
