@@ -2,7 +2,7 @@ use vec::Vec3;
 use ray::Ray;
 use scene::material::Material;
 use scene::shapes;
-use scene::shapes::{Shape, ShapeIntersection};
+use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
 #[deriving(Show)]
 pub struct Sphere {
@@ -19,7 +19,7 @@ pub struct Sphere {
 
 impl Sphere {
     pub fn new() -> Sphere {
-        Sphere{
+        Sphere {
             materials: Vec::new(),
             origin: Vec3::new(),
             radius: 0.0,
@@ -42,6 +42,15 @@ impl Sphere {
 }
 
 impl Shape for Sphere {
+    fn get_bbox(&self) -> BoundingBox {
+        let min = Vec3::init(-1.0, -1.0, -1.0);
+        let max = Vec3::init(1.0, 1.0, 1.0);
+        BoundingBox::init(
+            min.mult(self.radius) + self.origin,
+            max.mult(self.radius) + self.origin
+        )
+    }
+
     fn intersects(&self, ray: Ray) -> ShapeIntersection {
         // Transforming ray to object space
         let transformed_origin = ray.ori - self.origin;

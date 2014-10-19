@@ -1,9 +1,10 @@
+use std::fmt;
+
 use vec::Vec3;
 use ray::Ray;
 use scene::material::{Material, Color};
 use scene::shapes;
-use scene::shapes::{Shape, ShapeIntersection};
-use std::fmt;
+use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
 #[deriving(Show)]
 pub struct Vertex {
@@ -120,6 +121,22 @@ impl Index<u32, Vertex> for Poly {
 }
 
 impl Shape for Poly {
+    fn get_bbox(&self) -> BoundingBox {
+        let min = Vec3::init(
+            self[0][0].min(self[1][0].min(self[2][0])),
+            self[0][1].min(self[1][1].min(self[2][1])),
+            self[0][2].min(self[1][2].min(self[2][2]))
+        );
+
+        let max = Vec3::init(
+            self[0][0].max(self[1][0].max(self[2][0])),
+            self[0][0].max(self[1][0].max(self[2][0])),
+            self[0][0].max(self[1][0].max(self[2][0]))
+        );
+
+        BoundingBox::init(min, max)
+    }
+
     fn intersects(&self, ray: Ray) -> ShapeIntersection {
         let p: Vec3 = ray.ori;
         let d: Vec3 = ray.dir;
