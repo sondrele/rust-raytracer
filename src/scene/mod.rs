@@ -7,6 +7,7 @@ use scene::intersection::Intersection;
 pub mod material;
 pub mod shapes;
 pub mod intersection;
+pub mod bvh;
 
 // Is it possible to mplement traits instead of using enums,
 // make the fields private data and call trait methods
