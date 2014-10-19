@@ -1,3 +1,4 @@
+use std::cmp;
 
 #[deriving(Show)]
 pub struct Vec3 {
@@ -9,6 +10,29 @@ pub struct Vec3 {
 impl PartialEq for Vec3 {
     fn eq(&self, vec: &Vec3) -> bool {
         self.x == vec.x && self.y == vec.y && self.z == vec.z
+    }
+}
+
+impl PartialOrd for Vec3 {
+    fn partial_cmp(&self, other: &Vec3) -> Option<cmp::Ordering> {
+        match self < other {
+            true => Some(cmp::Less),
+            false => Some(cmp::Greater)
+        }
+    }
+
+    fn lt(&self, vec: &Vec3) -> bool {
+        if self[0] > vec[0] {
+            false
+        } else if self[0] < vec[0] {
+            true
+        } else if self[1] < vec[1] {
+            true
+        } else if self[1] == vec[1] && self[2] < vec[2] {
+            true
+        } else {
+            false
+        }
     }
 }
 

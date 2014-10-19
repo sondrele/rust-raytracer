@@ -1,4 +1,5 @@
 use std::mem::swap;
+use std::cmp;
 
 use vec::Vec3;
 use ray::Ray;
@@ -31,6 +32,10 @@ impl BoundingBox {
             min: min,
             max: max
         }
+    }
+
+    pub fn centroid(&self) -> Vec3 {
+        self.min.mult(0.5) + self.max.mult(0.5)
     }
 
     pub fn intersects(&self, ray: Ray) -> bool {
@@ -75,6 +80,25 @@ impl BoundingBox {
     }
 }
 
+impl PartialEq for BoundingBox {
+    fn eq(&self, bbox: &BoundingBox) -> bool {
+        self.min == bbox.min && self.max == bbox.max
+    }
+}
+
+impl PartialOrd for BoundingBox {
+    fn partial_cmp(&self, other: &BoundingBox) -> Option<cmp::Ordering> {
+        match self < other {
+            true => Some(cmp::Less),
+            false => Some(cmp::Greater)
+        }
+    }
+
+    fn lt(&self, bbox: &BoundingBox) -> bool {
+        self.centroid() < bbox.centroid()
+    }
+}
+
 pub trait Shape {
     fn get_bbox(&self) -> BoundingBox;
 
@@ -95,6 +119,7 @@ mod tests {
     use ray::Ray;
     use scene::shapes::Shape;
     use scene::shapes::sphere::Sphere;
+    use scene::shapes::BoundingBox;
 
     #[test]
     fn can_create_boundingbox_from_sphere() {
@@ -111,5 +136,13 @@ mod tests {
         let ray = Ray::init(Vec3::init(0.0, 0.0, -2.0), Vec3::init(0.0, 0.0, -1.0));
 
         assert!(bbox.intersects(ray));
+    }
+
+    #[test]
+    fn can_compare_bbox_based_on_centroid() {
+        let b0 = BoundingBox::init(Vec3::init(-1.0, 0.0, 0.0), Vec3::init(0.0, 1.0, 1.0));
+        let b1 = BoundingBox::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 1.0, 1.0));
+
+        assert!(b0 < b1);
     }
 }
