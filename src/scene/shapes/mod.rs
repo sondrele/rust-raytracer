@@ -80,6 +80,24 @@ impl BoundingBox {
     }
 }
 
+impl Add<BoundingBox, BoundingBox> for BoundingBox {
+    fn add(&self, other: &BoundingBox) -> BoundingBox {
+        let min = Vec3::init(
+            self.min[0].min(other.min[0]),
+            self.min[1].min(other.min[1]),
+            self.min[2].min(other.min[2])
+        );
+
+        let max = Vec3::init(
+            self.max[0].max(other.max[0]),
+            self.max[1].max(other.max[1]),
+            self.max[2].max(other.max[2])
+        );
+
+        BoundingBox::init(min, max)
+    }
+}
+
 impl PartialEq for BoundingBox {
     fn eq(&self, bbox: &BoundingBox) -> bool {
         self.min == bbox.min && self.max == bbox.max
