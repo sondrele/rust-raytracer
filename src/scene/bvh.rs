@@ -1,5 +1,7 @@
 use std::cmp;
 
+use ray::Ray;
+use scene::shapes;
 use scene::shapes::{BoundingBox, Shape};
 
 pub enum Node<'a> {
@@ -93,26 +95,60 @@ impl<'a> Tree<'a> {
             }
         }
     }
+
+    pub fn intersects(&self, ray: Ray) -> shapes::ShapeIntersection {
+        self.intersects_node(ray, &self.root)
+    }
+
+    fn intersects_node(&self, ray: Ray, node: &Node<'a>) -> shapes::ShapeIntersection {
+        match node {
+            &Empty => shapes::Missed,
+            &Leaf(ref n) => match n.shape {
+                Some(shape) => shape.intersects(ray),
+                None => shapes::Missed
+            },
+            _ => shapes::Missed
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use vec::Vec3;
-    use scene::bvh;
-    use scene::shapes;
+    use ray::Ray;
+    use scene::{bvh, shapes};
     use scene::shapes::Shape;
+
+    fn create_shape<'a>() -> Box<Shape+'a> {
+        let sphere = shapes::sphere::Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
+        box sphere
+    }
 
     #[test]
     fn can_init_tree_of_size_1() {
-        let sphere = shapes::sphere::Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
-        let shape: Box<Shape> = box sphere;
-        let mut shapes= vec!(shape);
+        let mut shapes= vec!(create_shape());
         let mut tree = bvh::Tree::new();
         tree.init(shapes.as_mut_slice());
 
         match tree.root {
             bvh::Leaf(n) => assert_eq!(n.bbox.centroid(), Vec3::init(0.0, 0.0, -5.0)),
             _ => fail!("Tree should have one Leaf-node")
+        }
+    }
+
+    #[test]
+    fn can_intersect_tree_of_size_1() {
+        let mut shapes= vec!(create_shape());
+        let mut tree = bvh::Tree::new();
+        tree.init(shapes.as_mut_slice());
+
+        let intersection = tree.intersects(
+            Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))
+        );
+
+        match intersection {
+            shapes::Hit(p) => assert_eq!(p, 4.0),
+            _ => fail!("Should have intersected with tree")
         }
     }
 }
