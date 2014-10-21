@@ -1,8 +1,7 @@
 use std::cmp;
 
 use ray::Ray;
-use scene::shapes;
-use scene::shapes::{BoundingBox, Shape};
+use scene::shapes::{ShapeIntersection, Missed, Hit, BoundingBox, Shape};
 
 pub enum Node<'a> {
     Member(Box<TreeNode<'a>>),
@@ -96,18 +95,28 @@ impl<'a> Tree<'a> {
         }
     }
 
-    pub fn intersects(&self, ray: Ray) -> shapes::ShapeIntersection {
-        self.intersects_node(ray, &self.root)
+    pub fn intersects(&self, ray: Ray) -> ShapeIntersection {
+        Tree::intersects_node(&self.root, ray)
     }
 
-    fn intersects_node(&self, ray: Ray, node: &Node<'a>) -> shapes::ShapeIntersection {
+    fn intersects_node(node: &Node<'a>, ray: Ray) -> ShapeIntersection<'a> {
         match node {
-            &Empty => shapes::Missed,
+            &Empty => Missed,
             &Leaf(ref n) => match n.shape {
                 Some(shape) => shape.intersects(ray),
-                None => shapes::Missed
+                None => Missed
             },
-            _ => shapes::Missed
+            &Member(ref n) => {
+                let left = Tree::intersects_node(&n.left, ray);
+                let right = Tree::intersects_node(&n.right, ray);
+
+                match (left, right) {
+                    (Hit(p0), Hit(p1)) => if p0 < p1 { Hit(p0) } else { Hit(p1) },
+                    (Hit(p), _) => Hit(p),
+                    (_, Hit(p)) => Hit(p),
+                    (_, _) => Missed
+                }
+            }
         }
     }
 }
