@@ -2,44 +2,44 @@ use std::cmp;
 
 use scene::shapes::{BoundingBox, Shape};
 
-// pub enum TreeNode<'a> {
-//     Child(Node<'a>),
-//     Empty
-// }
+pub enum Node<'a> {
+    Member(Box<TreeNode<'a>>),
+    Empty
+}
 
 #[derives(Show)]
-pub struct Node<'a> {
-    left: Option<Box<Node<'a>>>,
-    right: Option<Box<Node<'a>>>,
+pub struct TreeNode<'a> {
+    left: Node<'a>,
+    right: Node<'a>,
     shape: Option<&'a Box<Shape+'a>>,
     bbox: Option<BoundingBox>,
     leaf: bool
 }
 
-impl<'a> Node<'a> {
-    pub fn new() -> Node<'a> {
-        Node {
-            left: None,
-            right: None,
+impl<'a> TreeNode<'a> {
+    pub fn new() -> TreeNode<'a> {
+        TreeNode {
+            left: Empty,
+            right: Empty,
             shape: None,
             bbox: None,
             leaf: false
         }
     }
 
-    pub fn init(left: Option<Node<'a>>, right: Option<Node<'a>>) -> Node<'a> {
+    pub fn init(left: Node<'a>, right: Node<'a>) -> TreeNode<'a> {
         let left_bbox = match left {
-            Some(ref n) => n.bbox.unwrap_or(BoundingBox::new()),
-            None => BoundingBox::new()
+            Member(ref n) => n.bbox.unwrap_or(BoundingBox::new()),
+            Empty => BoundingBox::new()
         };
         let right_bbox = match right {
-            Some(ref n) => n.bbox.unwrap_or(BoundingBox::new()),
-            None => BoundingBox::new()
+            Member(ref n) => n.bbox.unwrap_or(BoundingBox::new()),
+            Empty => BoundingBox::new()
         };
 
-        let mut node = Node::new();
-        node.left = Some(box left.unwrap());
-        node.right = Some(box right.unwrap());
+        let mut node = TreeNode::new();
+        node.left = left;
+        node.right = right;
         node.bbox = Some(left_bbox + right_bbox);
         node
     }
@@ -51,13 +51,13 @@ impl<'a> Node<'a> {
 }
 
 pub struct Tree<'a> {
-    root: Option<Node<'a>>
+    root: Node<'a>
 }
 
 impl<'a> Tree<'a> {
     pub fn new() -> Tree<'a> {
         Tree {
-            root: None
+            root: Empty
         }
     }
 
@@ -67,14 +67,14 @@ impl<'a> Tree<'a> {
         self.root = root;
     }
 
-    pub fn build(&mut self, shapes: &'a mut [Box<Shape+'a>], depth: uint) -> Option<Node<'a>> {
+    pub fn build(&mut self, shapes: &'a mut [Box<Shape+'a>], depth: uint) -> Node<'a> {
         match shapes.len() {
-            0 => None,
+            0 => Empty,
             1 => {
-                let mut leaf = Node::new();
+                let mut leaf = box TreeNode::new();
                 leaf.add(&shapes[0]);
                 leaf.leaf = true;
-                Some(leaf)
+                Member(leaf)
             },
             _ => {
                 let axis = depth as u32 % 3;
@@ -85,12 +85,12 @@ impl<'a> Tree<'a> {
                     }
                 });
                 let half = shapes.len() / 2;
-                let (mut head, mut tail) = shapes.split_at_mut(half);
+                let (head, tail) = shapes.split_at_mut(half);
 
                 let left = self.build(head, depth + 1);
                 let right = self.build(tail, depth + 1);
 
-                Some(Node::init(left, right))
+                Member(box TreeNode::init(left, right))
             }
         }
     }
@@ -112,8 +112,8 @@ mod tests {
         tree.init(shapes.as_mut_slice());
 
         match tree.root {
-            Some(node) => assert!(node.leaf == true),
-            None => fail!("Tree should have one node")
+            bvh::Member(node) => assert!(node.leaf == true),
+            bvh::Empty => fail!("Tree should have one node")
         }
     }
 }
