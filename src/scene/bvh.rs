@@ -4,16 +4,15 @@ use scene::shapes::{BoundingBox, Shape};
 
 pub enum Node<'a> {
     Member(Box<TreeNode<'a>>),
+    Leaf(Box<TreeNode<'a>>),
     Empty
 }
 
-#[derives(Show)]
 pub struct TreeNode<'a> {
     left: Node<'a>,
     right: Node<'a>,
     shape: Option<&'a Box<Shape+'a>>,
-    bbox: Option<BoundingBox>,
-    leaf: bool
+    bbox: BoundingBox
 }
 
 impl<'a> TreeNode<'a> {
@@ -22,30 +21,31 @@ impl<'a> TreeNode<'a> {
             left: Empty,
             right: Empty,
             shape: None,
-            bbox: None,
-            leaf: false
+            bbox: BoundingBox::new()
+        }
+    }
+
+    fn extract_bbox(node: &Node<'a>) -> BoundingBox {
+        match node {
+            &Member(ref n) => n.bbox,
+            &Leaf(ref n) => n.bbox,
+            &Empty => BoundingBox::new()
         }
     }
 
     pub fn init(left: Node<'a>, right: Node<'a>) -> TreeNode<'a> {
-        let left_bbox = match left {
-            Member(ref n) => n.bbox.unwrap_or(BoundingBox::new()),
-            Empty => BoundingBox::new()
-        };
-        let right_bbox = match right {
-            Member(ref n) => n.bbox.unwrap_or(BoundingBox::new()),
-            Empty => BoundingBox::new()
-        };
+        let left_bbox = TreeNode::extract_bbox(&left);
+        let right_bbox = TreeNode::extract_bbox(&right);
 
         let mut node = TreeNode::new();
         node.left = left;
         node.right = right;
-        node.bbox = Some(left_bbox + right_bbox);
+        node.bbox = left_bbox + right_bbox;
         node
     }
 
     fn add(&mut self, shape: &'a Box<Shape+'a>) {
-        self.bbox = Some(shape.get_bbox());
+        self.bbox = shape.get_bbox();
         self.shape = Some(shape);
     }
 }
@@ -71,10 +71,9 @@ impl<'a> Tree<'a> {
         match shapes.len() {
             0 => Empty,
             1 => {
-                let mut leaf = box TreeNode::new();
-                leaf.add(&shapes[0]);
-                leaf.leaf = true;
-                Member(leaf)
+                let mut node = box TreeNode::new();
+                node.add(&shapes[0]);
+                Leaf(node)
             },
             _ => {
                 let axis = depth as u32 % 3;
@@ -112,8 +111,8 @@ mod tests {
         tree.init(shapes.as_mut_slice());
 
         match tree.root {
-            bvh::Member(node) => assert!(node.leaf == true),
-            bvh::Empty => fail!("Tree should have one node")
+            bvh::Leaf(n) => assert_eq!(n.bbox.centroid(), Vec3::init(0.0, 0.0, -5.0)),
+            _ => fail!("Tree should have one Leaf-node")
         }
     }
 }
