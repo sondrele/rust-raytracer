@@ -223,7 +223,7 @@ impl SceneParser {
         vertex
     }
 
-    fn parse_polygon(&mut self, has_normal: bool, has_material: bool) -> Poly {
+    fn parse_poly(&mut self, has_normal: bool, has_material: bool) -> Poly {
         self.check_and_consume("poly");
         self.check_and_consume("{");
         self.check_and_consume("numVertices");
@@ -243,7 +243,7 @@ impl SceneParser {
         poly
     }
 
-    fn parse_polygon_set(&mut self) -> Vec<Poly> {
+    fn parse_polyset(&mut self) -> Vec<Poly> {
         self.check_and_consume("poly_set");
         self.check_and_consume("{");
         self.check_and_consume("name");
@@ -269,9 +269,9 @@ impl SceneParser {
         self.check_and_consume("numPolys");
 
         let mut num_polys: uint = self.next_num();
-        let mut polygons = Vec::with_capacity(num_polys);
+        let mut polyset = Vec::with_capacity(num_polys);
         while num_polys > 0 {
-            let mut poly = self.parse_polygon(per_vertex_normal, material_binding);
+            let mut poly = self.parse_poly(per_vertex_normal, material_binding);
 
             match material_binding {
                 true => {
@@ -299,12 +299,12 @@ impl SceneParser {
                     poly.materials.push(materials[0].clone())
                 }
             }
-            polygons.push(poly);
+            polyset.push(poly);
             num_polys -= 1;
         }
 
         self.check_and_consume("}");
-        polygons
+        polyset
     }
 
     fn parse_camera(&mut self) -> Camera {
@@ -338,12 +338,12 @@ impl SceneParser {
                     scene.shapes.push(box sphere);
                 },
                 "poly_set" => {
-                    let mut polyset = self.parse_polygon_set();
+                    let mut polyset = self.parse_polyset();
 
                     for _ in range(0, polyset.len()) {
                         match polyset.pop() {
                             Some(poly) => scene.shapes.push(box poly),
-                            None => fail!("Incorrect amount of polygons in polyset")
+                            None => fail!("Incorrect amount of polys in polyset")
                         }
                     }
                 },
@@ -483,18 +483,18 @@ mod test_parser {
     }
 
     #[test]
-    fn can_parse_polygon() {
+    fn can_parse_poly() {
         let mut parser = scene_parser("polygon");
-        let poly = parser.parse_polygon(false, false);
+        let poly = parser.parse_poly(false, false);
         assert_eq!(poly[0][0], 0.0);
         assert_eq!(poly[1][0], 0.5);
         assert_eq!(poly[2][0], 10.0);
     }
 
     #[test]
-    fn can_parse_polygonset() {
+    fn can_parse_polyset() {
         let mut parser = scene_parser("polyset");
-        let polyset = parser.parse_polygon_set();
+        let polyset = parser.parse_polyset();
         assert_eq!(polyset.len(), 12);
 
         let ref poly0 = polyset[0];
@@ -504,9 +504,9 @@ mod test_parser {
     }
 
     #[test]
-    fn can_parse_per_vertex_polygonset() {
+    fn can_parse_per_vertex_polyset() {
         let mut parser = scene_parser("per-vertex-polyset");
-        let polyset = parser.parse_polygon_set();
+        let polyset = parser.parse_polyset();
         assert_eq!(polyset.len(), 3);
 
         let ref poly0 = polyset[0];
