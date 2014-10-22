@@ -6,7 +6,6 @@ use scene::material::{Material, Color};
 
 pub mod sphere;
 pub mod poly;
-pub mod polyset;
 
 pub enum ShapeIntersection<'a> {
     Hit(f32),
