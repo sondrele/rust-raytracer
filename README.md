@@ -3,11 +3,10 @@ rust-raytracer
 
 Todo
 ----
-* Make Sphere and Poly implement a Primitive trait
-* Scene needs a vector with Primitives *and* Shapes
-* Make Poly reference material(s) in the PolySet Shape
+* Make a structure where Poly can reference material - this avoids duplicating material for each Poly
 * Optimize scene-intersection with a BVH tree
 * Implement Area lights
 * Implement environment maps
+* Add shaders to shapes
 
 And the list goes on forever... :)
