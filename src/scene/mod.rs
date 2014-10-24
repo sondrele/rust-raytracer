@@ -1,5 +1,6 @@
 use vec::Vec3;
 use ray::Ray;
+use scene::bvh::Tree;
 use scene::material::Color;
 use scene::shapes::Shape;
 use scene::intersection::Intersection;
@@ -65,7 +66,8 @@ pub enum SceneIntersection<'a> {
 pub struct Scene<'a> {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub shapes: Vec<Box<Shape+'a>>
+    pub shapes: Vec<Box<Shape+'a>>,
+    tree: Tree<'a>
 }
 
 impl<'a> Scene<'a> {
@@ -73,16 +75,27 @@ impl<'a> Scene<'a> {
         Scene {
             camera: Camera::new(),
             lights: Vec::new(),
-            shapes: Vec::new()
+            shapes: Vec::new(),
+            tree: Tree::new()
         }
     }
 
-    pub fn intersects(&'a self, ray: Ray) -> SceneIntersection {
+    pub fn build_tree(&'a mut self) {
+        self.tree.init(self.shapes.as_mut_slice())
+    }
+
+    pub fn intersects(&'a self, ray: Ray) -> SceneIntersection<'a> {
+        match self.tree.root {
+            bvh::Empty => self.iterative_search(ray),
+            _ => self.tree_search(ray)
+        }
+    }
+
+    fn iterative_search(&'a self, ray: Ray) -> SceneIntersection<'a> {
         let mut intersection = Missed;
         let mut point: f32 = 0.0;
 
         let mut has_intersected = false;
-
         for shape in self.shapes.iter() {
             match shape.intersects(ray) {
                 shapes::Hit(new_point) if !has_intersected => {
@@ -97,8 +110,15 @@ impl<'a> Scene<'a> {
                 _ => ()
             }
         }
-
         intersection
+    }
+
+    fn tree_search(&'a self, ray: Ray) -> SceneIntersection<'a> {
+        let intersection = self.tree.intersects(ray);
+        match intersection {
+            bvh::Hit(node, point) => Intersected(Intersection::new(point, ray, node.get_shape())),
+            bvh::Missed => Missed
+        }
     }
 }
 

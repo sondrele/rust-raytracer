@@ -52,7 +52,7 @@ impl<'a> RayTracer<'a> {
         raytracer
     }
 
-    pub fn set_scene(&mut self, scene: Scene) {
+    pub fn set_scene(&mut self, scene: Scene<'a>) {
         self.scene = Some(scene);
         self.setup_camera();
     }

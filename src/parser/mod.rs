@@ -321,7 +321,7 @@ impl SceneParser {
         camera
     }
 
-    pub fn parse_scene(&mut self) -> Scene {
+    pub fn parse_scene<'a>(&mut self) -> Scene<'a> {
         self.check_and_consume("Composer");
         self.check_and_consume("format");
         self.check_and_consume("2.1");
@@ -352,6 +352,7 @@ impl SceneParser {
             }
             tkn = self.peak();
         }
+        // scene.build_tree();
         scene
     }
 }
