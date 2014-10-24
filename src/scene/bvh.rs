@@ -1,12 +1,18 @@
 use std::cmp;
 
 use ray::Ray;
-use scene::shapes::{ShapeIntersection, Missed, Hit, BoundingBox, Shape};
+use scene::shapes;
+use scene::shapes::{BoundingBox, Shape};
 
 pub enum Node<'a> {
     Member(Box<TreeNode<'a>>),
     Leaf(Box<TreeNode<'a>>),
     Empty
+}
+
+pub enum NodeIntersection<'a> {
+    Hit(&'a Box<TreeNode<'a>>, f32),
+    Missed
 }
 
 pub struct TreeNode<'a> {
@@ -49,10 +55,17 @@ impl<'a> TreeNode<'a> {
         self.bbox = shape.get_bbox();
         self.shape = Some(shape);
     }
+
+    pub fn get_shape(&self) -> &'a Box<Shape+'a> {
+        match self.shape {
+            Some(shape) => shape,
+            None => fail!("Node has not been assigned a shape")
+        }
+    }
 }
 
 pub struct Tree<'a> {
-    root: Node<'a>
+    pub root: Node<'a>
 }
 
 impl<'a> Tree<'a> {
@@ -95,15 +108,18 @@ impl<'a> Tree<'a> {
         }
     }
 
-    pub fn intersects(&self, ray: Ray) -> ShapeIntersection {
+    pub fn intersects(&'a self, ray: Ray) -> NodeIntersection<'a> {
         Tree::intersects_node(&self.root, ray)
     }
 
-    fn intersects_node(node: &Node<'a>, ray: Ray) -> ShapeIntersection<'a> {
+    fn intersects_node(node: &'a Node<'a>, ray: Ray) -> NodeIntersection<'a> {
         match node {
             &Empty => Missed,
             &Leaf(ref n) => match n.shape {
-                Some(shape) => shape.intersects(ray),
+                Some(shape) => match shape.intersects(ray) {
+                    shapes::Hit(p) => Hit(n, p),
+                    shapes::Missed => Missed
+                },
                 None => Missed
             },
             &Member(ref n) => {
@@ -111,9 +127,9 @@ impl<'a> Tree<'a> {
                 let right = Tree::intersects_node(&n.right, ray);
 
                 match (left, right) {
-                    (Hit(p0), Hit(p1)) => if p0 < p1 { Hit(p0) } else { Hit(p1) },
-                    (Hit(p), _) => Hit(p),
-                    (_, Hit(p)) => Hit(p),
+                    (Hit(n0, p0), Hit(n1, p1)) => if p0 < p1 { Hit(n0, p0) } else { Hit(n1, p1) },
+                    (Hit(n, p), _) => Hit(n, p),
+                    (_, Hit(n, p)) => Hit(n, p),
                     (_, _) => Missed
                 }
             }
@@ -156,7 +172,7 @@ mod tests {
         );
 
         match intersection {
-            shapes::Hit(p) => assert_eq!(p, 4.0),
+            bvh::Hit(_, p) => assert_eq!(p, 4.0),
             _ => fail!("Should have intersected with tree")
         }
     }
