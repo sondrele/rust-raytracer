@@ -6,7 +6,6 @@ use vec::Vec3;
 use scene::{Scene, Camera, Light, PointLight, DirectionalLight, AreaLight};
 use scene::material::{Material, Color};
 use scene::shapes::sphere::Sphere;
-use scene::shapes::polyset::PolySet;
 use scene::shapes::poly::{Poly, Vertex};
 
 pub struct SceneParser {
@@ -224,7 +223,7 @@ impl SceneParser {
         vertex
     }
 
-    fn parse_polygon(&mut self, has_normal: bool, has_material: bool) -> Poly {
+    fn parse_poly(&mut self, has_normal: bool, has_material: bool) -> Poly {
         self.check_and_consume("poly");
         self.check_and_consume("{");
         self.check_and_consume("numVertices");
@@ -244,18 +243,18 @@ impl SceneParser {
         poly
     }
 
-    fn parse_polygon_set(&mut self) -> PolySet {
+    fn parse_polyset(&mut self) -> Vec<Poly> {
         self.check_and_consume("poly_set");
         self.check_and_consume("{");
         self.check_and_consume("name");
         self.consume_next();
         self.check_and_consume("numMaterials");
 
-        let mut polyset = PolySet::new();
-        let mut num_materials: i32 = self.next_num();
+        let mut num_materials: uint = self.next_num();
+        let mut materials = Vec::with_capacity(num_materials);
         while num_materials > 0 {
             let material = self.parse_material();
-            polyset.materials.push(material);
+            materials.push(material);
             num_materials -= 1;
         }
 
@@ -269,25 +268,26 @@ impl SceneParser {
         self.consume_next(); // TODO: This field is probably never used
         self.check_and_consume("numPolys");
 
-        let mut num_polys: i32 = self.next_num();
+        let mut num_polys: uint = self.next_num();
+        let mut polyset = Vec::with_capacity(num_polys);
         while num_polys > 0 {
-            let mut poly = self.parse_polygon(per_vertex_normal, material_binding);
+            let mut poly = self.parse_poly(per_vertex_normal, material_binding);
 
             match material_binding {
                 true => {
                     let (i0, i1, i2) = (poly[0].mat_index, poly[1].mat_index, poly[2].mat_index);
-                    poly.materials.push(polyset.materials[i0 as uint].clone());
+                    poly.materials.push(materials[i0 as uint].clone());
                     poly.vertices[0].mat_index = poly.materials.len() as u32 - 1;
 
                     if i1 != i0 {
-                        poly.materials.push(polyset.materials[i1 as uint].clone());
+                        poly.materials.push(materials[i1 as uint].clone());
                         poly.vertices[1].mat_index = poly.materials.len() as u32 - 1;
                     } else {
                         poly.vertices[1].mat_index = 0;
                     }
 
                     if i2 != i1 && i2 != i0 {
-                        poly.materials.push(polyset.materials[i2 as uint].clone());
+                        poly.materials.push(materials[i2 as uint].clone());
                         poly.vertices[2].mat_index = poly.materials.len() as u32 - 1;
                     } else if i2 == i1 && i2 != i0 {
                         poly.vertices[2].mat_index = 1;
@@ -296,10 +296,10 @@ impl SceneParser {
                     }
                 },
                 false => {
-                    poly.materials.push(polyset.materials[0].clone())
+                    poly.materials.push(materials[0].clone())
                 }
             }
-            polyset.polygons.push(poly);
+            polyset.push(poly);
             num_polys -= 1;
         }
 
@@ -338,12 +338,12 @@ impl SceneParser {
                     scene.shapes.push(box sphere);
                 },
                 "poly_set" => {
-                    let mut polyset = self.parse_polygon_set();
+                    let mut polyset = self.parse_polyset();
 
-                    for _ in range(0, polyset.polygons.len()) {
-                        match polyset.polygons.pop() {
+                    for _ in range(0, polyset.len()) {
+                        match polyset.pop() {
                             Some(poly) => scene.shapes.push(box poly),
-                            None => fail!("Incorrect amount of polygons in polyset")
+                            None => fail!("Incorrect amount of polys in polyset")
                         }
                     }
                 },
@@ -484,35 +484,33 @@ mod test_parser {
     }
 
     #[test]
-    fn can_parse_polygon() {
+    fn can_parse_poly() {
         let mut parser = scene_parser("polygon");
-        let poly = parser.parse_polygon(false, false);
+        let poly = parser.parse_poly(false, false);
         assert_eq!(poly[0][0], 0.0);
         assert_eq!(poly[1][0], 0.5);
         assert_eq!(poly[2][0], 10.0);
     }
 
     #[test]
-    fn can_parse_polygonset() {
+    fn can_parse_polyset() {
         let mut parser = scene_parser("polyset");
-        let polyset = parser.parse_polygon_set();
-        assert_eq!(polyset.materials.len(), 1);
-        assert_eq!(polyset.polygons.len(), 12);
+        let polyset = parser.parse_polyset();
+        assert_eq!(polyset.len(), 12);
 
-        let ref poly0 = polyset.polygons[0];
+        let ref poly0 = polyset[0];
         assert_eq!(poly0.vertex_material, false);
         assert_eq!(poly0.vertex_normal, false);
         assert_eq!(poly0.materials.len(), 1);
     }
 
     #[test]
-    fn can_parse_per_vertex_polygonset() {
+    fn can_parse_per_vertex_polyset() {
         let mut parser = scene_parser("per-vertex-polyset");
-        let polyset = parser.parse_polygon_set();
-        assert_eq!(polyset.materials.len(), 6);
-        assert_eq!(polyset.polygons.len(), 3);
+        let polyset = parser.parse_polyset();
+        assert_eq!(polyset.len(), 3);
 
-        let ref poly0 = polyset.polygons[0];
+        let ref poly0 = polyset[0];
         assert_eq!(poly0.vertex_material, true);
         assert_eq!(poly0.vertex_normal, true);
         assert_eq!(poly0.materials.len(), 3);
@@ -523,7 +521,7 @@ mod test_parser {
         assert_eq!(poly0.materials[2].diffuse, Color::init(0.0, 1.0, 0.0));
         assert_eq!(poly0[2].mat_index, 2);
 
-        let ref poly1 = polyset.polygons[1];
+        let ref poly1 = polyset[1];
         assert_eq!(poly1.vertex_material, true);
         assert_eq!(poly1.vertex_normal, true);
         assert_eq!(poly1.materials.len(), 2);
@@ -533,7 +531,7 @@ mod test_parser {
         assert_eq!(poly1.materials[1].diffuse, Color::init(1.0, 0.0, 0.0));
         assert_eq!(poly1[2].mat_index, 1);
 
-        let ref poly2 = polyset.polygons[2];
+        let ref poly2 = polyset[2];
         assert_eq!(poly2.vertex_material, true);
         assert_eq!(poly2.vertex_normal, true);
         assert_eq!(poly2.materials.len(), 2);

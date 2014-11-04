@@ -7,3 +7,4 @@ rust-raytracer.sublime-workspace
 # Cargo target dir
 target
 
+*.racertmp

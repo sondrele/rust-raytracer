@@ -1,6 +1,6 @@
 extern crate bmp;
 
-use bmp::BMPimage;
+use bmp::Image;
 
 use vec::Vec3;
 use ray::Ray;
@@ -244,10 +244,10 @@ impl<'a> RayTracer<'a> {
         direct_light + ambient_light + reflective_light + refractive_light
     }
 
-    pub fn trace_rays(&self) -> BMPimage {
+    pub fn trace_rays(&self) -> Image {
         match self.scene {
             Some(ref scene) => {
-                let mut img = BMPimage::new(self.width as i32, self.height as i32);
+                let mut img = Image::new(self.width, self.height);
 
                 for y in range(0, self.width as i32) {
                     for x in range(0, self.height as i32) {

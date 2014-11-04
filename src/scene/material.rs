@@ -1,4 +1,4 @@
-use bmp::BMPpixel;
+use bmp::Pixel;
 
 #[deriving(PartialEq, Clone, Show)]
 pub struct Color {
@@ -52,8 +52,8 @@ impl Color {
         (self.r * self.r + self.g * self.g + self.b * self.b).sqrt()
     }
 
-    pub fn as_pixel(&self) -> BMPpixel {
-        BMPpixel{
+    pub fn as_pixel(&self) -> Pixel {
+        Pixel{
             r: (self.r * 255.0) as u8,
             g: (self.g * 255.0) as u8,
             b: (self.b * 255.0) as u8
