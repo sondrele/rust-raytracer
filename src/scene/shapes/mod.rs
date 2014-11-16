@@ -74,6 +74,11 @@ impl BoundingBox {
     }
 }
 
+pub enum Primitive {
+    PolyPrim(poly::Poly),
+    SpherePrim(sphere::Sphere)
+}
+
 pub trait Shape {
     fn get_bbox(&self) -> BoundingBox;
 

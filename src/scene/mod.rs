@@ -1,7 +1,7 @@
 use vec::Vec3;
 use ray::Ray;
 use scene::material::Color;
-use scene::shapes::Shape;
+use scene::shapes::{PolyPrim, SpherePrim, Shape};
 use scene::intersection::Intersection;
 
 pub mod material;
@@ -64,7 +64,7 @@ pub enum SceneIntersection<'a> {
 pub struct Scene<'a> {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub shapes: Vec<Box<Shape+'a>>
+    pub primitives: Vec<shapes::Primitive>
 }
 
 impl<'a> Scene<'a> {
@@ -72,7 +72,7 @@ impl<'a> Scene<'a> {
         Scene {
             camera: Camera::new(),
             lights: Vec::new(),
-            shapes: Vec::new()
+            primitives: Vec::new()
         }
     }
 
@@ -82,18 +82,33 @@ impl<'a> Scene<'a> {
 
         let mut has_intersected = false;
 
-        for shape in self.shapes.iter() {
-            match shape.intersects(ray) {
-                shapes::Hit(new_point) if !has_intersected => {
-                    has_intersected = true;
-                    point = new_point;
-                    intersection = Intersected(Intersection::new(point, ray, shape));
+        // TODO: Duplicate code
+        for prim in self.primitives.iter() {
+            match prim {
+                &PolyPrim(ref poly) => match poly.intersects(ray) {
+                    shapes::Hit(new_point) if !has_intersected => {
+                        has_intersected = true;
+                        point = new_point;
+                        intersection = Intersected(Intersection::new(point, ray, prim));
+                    },
+                    shapes::Hit(new_point) if has_intersected && new_point < point => {
+                        point = new_point;
+                        intersection = Intersected(Intersection::new(point, ray, prim));
+                    },
+                    _ => ()
                 },
-                shapes::Hit(new_point) if has_intersected && new_point < point => {
-                    point = new_point;
-                    intersection = Intersected(Intersection::new(point, ray, shape));
-                },
-                _ => ()
+                &SpherePrim(ref sphere) => match sphere.intersects(ray) {
+                    shapes::Hit(new_point) if !has_intersected => {
+                        has_intersected = true;
+                        point = new_point;
+                        intersection = Intersected(Intersection::new(point, ray, prim));
+                    },
+                    shapes::Hit(new_point) if has_intersected && new_point < point => {
+                        point = new_point;
+                        intersection = Intersected(Intersection::new(point, ray, prim));
+                    },
+                    _ => ()
+                }
             }
         }
 

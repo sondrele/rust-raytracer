@@ -5,6 +5,7 @@ use std::from_str::FromStr;
 use vec::Vec3;
 use scene::{Scene, Camera, Light, PointLight, DirectionalLight, AreaLight};
 use scene::material::{Material, Color};
+use scene::shapes::{SpherePrim, PolyPrim};
 use scene::shapes::sphere::Sphere;
 use scene::shapes::poly::{Poly, Vertex};
 
@@ -335,14 +336,14 @@ impl SceneParser {
                 "camera" => scene.camera = self.parse_camera(),
                 "sphere" => {
                     let sphere = self.parse_sphere();
-                    scene.shapes.push(box sphere);
+                    scene.primitives.push(SpherePrim(sphere));
                 },
                 "poly_set" => {
                     let mut polyset = self.parse_polyset();
 
                     for _ in range(0, polyset.len()) {
                         match polyset.pop() {
-                            Some(poly) => scene.shapes.push(box poly),
+                            Some(poly) => scene.primitives.push(PolyPrim(poly)),
                             None => fail!("Incorrect amount of polys in polyset")
                         }
                     }
