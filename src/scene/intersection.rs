@@ -1,6 +1,6 @@
 use ray::Ray;
 use vec::Vec3;
-use scene::shapes::{Primitive, Shape, PolyPrim, SpherePrim};
+use scene::shapes::{Primitive, Shape};
 use scene::material;
 
 pub struct Intersection<'a> {
@@ -27,24 +27,15 @@ impl<'a> Intersection<'a> {
     }
 
     pub fn color(&self) -> material::Color {
-        match self.prim {
-            &PolyPrim(ref poly) => poly.diffuse_color(self.point()),
-            &SpherePrim(ref sphere) => sphere.diffuse_color(self.point()),
-        }
+        self.prim.diffuse_color(self.point())
     }
 
     pub fn material(&self) -> material::Material {
-        match self.prim {
-            &PolyPrim(ref poly) => poly.get_material(),
-            &SpherePrim(ref sphere) => sphere.get_material()
-        }
+        self.prim.get_material()
     }
 
     pub fn surface_normal(&self) -> Vec3 {
-        match self.prim {
-            &PolyPrim(ref poly) => poly.surface_normal(self.ray.dir, self.point()),
-            &SpherePrim(ref sphere) => sphere.surface_normal(self.ray.dir, self.point())
-        }
+        self.prim.surface_normal(self.ray.dir, self.point())
     }
 
     pub fn reflective_ray(&self) -> Ray {

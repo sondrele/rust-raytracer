@@ -1,6 +1,6 @@
 use vec::Vec3;
 use ray::Ray;
-use scene::material::Material;
+use scene::material::{Material, Color};
 use scene::shapes;
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
@@ -110,6 +110,10 @@ impl Shape for Sphere {
         let mut normal: Vec3 = point - self.origin;
         normal.normalize();
         normal
+    }
+
+    fn diffuse_color(&self, _: Vec3) -> Color {
+        self.get_material().diffuse
     }
 }
 
