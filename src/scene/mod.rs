@@ -1,7 +1,7 @@
 use vec::Vec3;
 use ray::Ray;
 use scene::material::Color;
-use scene::shapes::{Poly, Sphere, Shape};
+use scene::shapes::Shape;
 use scene::intersection::Intersection;
 
 pub mod material;
@@ -82,33 +82,18 @@ impl<'a> Scene<'a> {
 
         let mut has_intersected = false;
 
-        // TODO: Duplicate code
         for prim in self.primitives.iter() {
-            match prim {
-                &Poly(ref poly) => match poly.intersects(ray) {
-                    shapes::Hit(new_point) if !has_intersected => {
-                        has_intersected = true;
-                        point = new_point;
-                        intersection = Intersected(Intersection::new(point, ray, prim));
-                    },
-                    shapes::Hit(new_point) if has_intersected && new_point < point => {
-                        point = new_point;
-                        intersection = Intersected(Intersection::new(point, ray, prim));
-                    },
-                    _ => ()
+            match prim.intersects(ray) {
+                shapes::Hit(new_point) if !has_intersected => {
+                    has_intersected = true;
+                    point = new_point;
+                    intersection = Intersected(Intersection::new(point, ray, prim));
                 },
-                &Sphere(ref sphere) => match sphere.intersects(ray) {
-                    shapes::Hit(new_point) if !has_intersected => {
-                        has_intersected = true;
-                        point = new_point;
-                        intersection = Intersected(Intersection::new(point, ray, prim));
-                    },
-                    shapes::Hit(new_point) if has_intersected && new_point < point => {
-                        point = new_point;
-                        intersection = Intersected(Intersection::new(point, ray, prim));
-                    },
-                    _ => ()
-                }
+                shapes::Hit(new_point) if has_intersected && new_point < point => {
+                    point = new_point;
+                    intersection = Intersected(Intersection::new(point, ray, prim));
+                },
+                _ => ()
             }
         }
 
