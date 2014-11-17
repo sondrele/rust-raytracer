@@ -5,8 +5,8 @@ use std::os;
 use std::from_str::FromStr;
 use getopts::{Matches, optopt, optflag, getopts, OptGroup};
 
+use rstracer::scene::parser::SceneParser;
 use rstracer::RayTracer;
-use rstracer::parser::SceneParser;
 
 fn parse_command_line(program: &str, args: &[String], opts: &[OptGroup]) -> Matches {
     match getopts(args, opts) {

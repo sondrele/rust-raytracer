@@ -4,6 +4,7 @@ use scene::material::Color;
 use scene::shapes::Shape;
 use scene::intersection::Intersection;
 
+pub mod parser;
 pub mod material;
 pub mod shapes;
 pub mod intersection;

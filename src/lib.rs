@@ -10,7 +10,6 @@ use scene::intersection::Intersection;
 
 pub mod vec;
 pub mod ray;
-pub mod parser;
 pub mod scene;
 
 static SCALE: f32 = 1000.0;
