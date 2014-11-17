@@ -83,47 +83,47 @@ pub trait Shape {
 
     fn get_material(&self) -> Material;
 
-    fn diffuse_color(&self, _: Vec3) -> Color;
+    fn diffuse_color(&self, point: Vec3) -> Color;
 }
 
 pub enum Primitive {
-    PolyPrim(poly::Poly),
-    SpherePrim(sphere::Sphere)
+    Poly(poly::Poly),
+    Sphere(sphere::Sphere)
 }
 
 impl Shape for Primitive {
     fn get_bbox(&self) -> BoundingBox {
         match self {
-            &PolyPrim(ref poly) => poly.get_bbox(),
-            &SpherePrim(ref sphere) => sphere.get_bbox(),
+            &Poly(ref poly) => poly.get_bbox(),
+            &Sphere(ref sphere) => sphere.get_bbox(),
         }
     }
 
     fn intersects(&self, ray: Ray) -> ShapeIntersection {
         match self {
-            &PolyPrim(ref poly) => poly.intersects(ray),
-            &SpherePrim(ref sphere) => sphere.intersects(ray),
+            &Poly(ref poly) => poly.intersects(ray),
+            &Sphere(ref sphere) => sphere.intersects(ray),
         }
     }
 
     fn surface_normal(&self, direction: Vec3, point: Vec3) -> Vec3 {
         match self {
-            &PolyPrim(ref poly) => poly.surface_normal(direction, point),
-            &SpherePrim(ref sphere) => sphere.surface_normal(direction, point),
+            &Poly(ref poly) => poly.surface_normal(direction, point),
+            &Sphere(ref sphere) => sphere.surface_normal(direction, point),
         }
     }
 
     fn get_material(&self) -> Material {
         match self {
-            &PolyPrim(ref poly) => poly.get_material(),
-            &SpherePrim(ref sphere) => sphere.get_material(),
+            &Poly(ref poly) => poly.get_material(),
+            &Sphere(ref sphere) => sphere.get_material(),
         }
     }
 
     fn diffuse_color(&self, point: Vec3) -> Color {
         match self {
-            &PolyPrim(ref poly) => poly.diffuse_color(point),
-            &SpherePrim(_) => self.get_material().diffuse,
+            &Poly(ref poly) => poly.diffuse_color(point),
+            &Sphere(_) => self.get_material().diffuse,
         }
     }
 }

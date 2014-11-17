@@ -5,9 +5,7 @@ use std::from_str::FromStr;
 use vec::Vec3;
 use scene::{Scene, Camera, Light, PointLight, DirectionalLight, AreaLight};
 use scene::material::{Material, Color};
-use scene::shapes::{SpherePrim, PolyPrim};
-use scene::shapes::sphere::Sphere;
-use scene::shapes::poly::{Poly, Vertex};
+use scene::shapes::{sphere, poly, Sphere, Poly};
 
 pub struct SceneParser {
     reader: BufferedReader<File>,
@@ -175,7 +173,7 @@ impl SceneParser {
         material
     }
 
-    fn parse_sphere(&mut self) -> Sphere {
+    fn parse_sphere(&mut self) -> sphere::Sphere {
         self.check_and_consume("sphere");
         self.check_and_consume("{");
         self.check_and_consume("name");
@@ -183,7 +181,7 @@ impl SceneParser {
         self.check_and_consume("numMaterials");
 
         let mut num_materials: i32 = self.next_num();
-        let mut sphere = Sphere::new();
+        let mut sphere = sphere::Sphere::new();
         while num_materials > 0 {
             let material = self.parse_material();
             sphere.materials.push(material);
@@ -203,8 +201,8 @@ impl SceneParser {
         sphere
     }
 
-    fn parse_vertex(&mut self, has_normal: bool, has_material: bool) -> Vertex {
-        let mut vertex = Vertex::init(self.parse_vec3("pos"));
+    fn parse_vertex(&mut self, has_normal: bool, has_material: bool) -> poly::Vertex {
+        let mut vertex = poly::Vertex::init(self.parse_vec3("pos"));
 
         match has_normal {
             true => {
@@ -224,13 +222,13 @@ impl SceneParser {
         vertex
     }
 
-    fn parse_poly(&mut self, has_normal: bool, has_material: bool) -> Poly {
+    fn parse_poly(&mut self, has_normal: bool, has_material: bool) -> poly::Poly {
         self.check_and_consume("poly");
         self.check_and_consume("{");
         self.check_and_consume("numVertices");
         self.consume_next(); // Always 3
 
-        let poly = Poly {
+        let poly = poly::Poly {
             materials: Vec::new(),
             vertices: [
                 self.parse_vertex(has_normal, has_material),
@@ -244,7 +242,7 @@ impl SceneParser {
         poly
     }
 
-    fn parse_polyset(&mut self) -> Vec<Poly> {
+    fn parse_polyset(&mut self) -> Vec<poly::Poly> {
         self.check_and_consume("poly_set");
         self.check_and_consume("{");
         self.check_and_consume("name");
@@ -336,14 +334,14 @@ impl SceneParser {
                 "camera" => scene.camera = self.parse_camera(),
                 "sphere" => {
                     let sphere = self.parse_sphere();
-                    scene.primitives.push(SpherePrim(sphere));
+                    scene.primitives.push(Sphere(sphere));
                 },
                 "poly_set" => {
                     let mut polyset = self.parse_polyset();
 
                     for _ in range(0, polyset.len()) {
                         match polyset.pop() {
-                            Some(poly) => scene.primitives.push(PolyPrim(poly)),
+                            Some(poly) => scene.primitives.push(Poly(poly)),
                             None => fail!("Incorrect amount of polys in polyset")
                         }
                     }

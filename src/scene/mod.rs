@@ -1,7 +1,7 @@
 use vec::Vec3;
 use ray::Ray;
 use scene::material::Color;
-use scene::shapes::{PolyPrim, SpherePrim, Shape};
+use scene::shapes::{Poly, Sphere, Shape};
 use scene::intersection::Intersection;
 
 pub mod material;
@@ -85,7 +85,7 @@ impl<'a> Scene<'a> {
         // TODO: Duplicate code
         for prim in self.primitives.iter() {
             match prim {
-                &PolyPrim(ref poly) => match poly.intersects(ray) {
+                &Poly(ref poly) => match poly.intersects(ray) {
                     shapes::Hit(new_point) if !has_intersected => {
                         has_intersected = true;
                         point = new_point;
@@ -97,7 +97,7 @@ impl<'a> Scene<'a> {
                     },
                     _ => ()
                 },
-                &SpherePrim(ref sphere) => match sphere.intersects(ray) {
+                &Sphere(ref sphere) => match sphere.intersects(ray) {
                     shapes::Hit(new_point) if !has_intersected => {
                         has_intersected = true;
                         point = new_point;
@@ -121,15 +121,14 @@ mod tests {
     use vec::Vec3;
     use ray::Ray;
     use scene::{Scene, Intersected};
-    use scene::shapes::SpherePrim;
-    use scene::shapes::sphere::Sphere;
+    use scene::shapes::{sphere, Sphere};
     use scene::material::{Color, Material};
 
     fn create_scene<'a>() -> Scene<'a> {
-        let mut sphere = Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
+        let mut sphere = sphere::Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
         sphere.materials.insert(0, Material::init(Color::init(1.0, 0.0, 0.0)));
         let mut scene = Scene::new();
-        scene.primitives.push(SpherePrim(sphere));
+        scene.primitives.push(Sphere(sphere));
         scene
     }
 
