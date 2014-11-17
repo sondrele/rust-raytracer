@@ -558,6 +558,6 @@ mod test_parser {
         let mut parser = scene_parser("scene");
         let scene = parser.parse_scene();
         assert_eq!(scene.lights.len(), 3);
-        assert_eq!(scene.shapes.len(), 13);
+        assert_eq!(scene.primitives.len(), 13);
     }
 }

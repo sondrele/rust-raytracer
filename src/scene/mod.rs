@@ -120,8 +120,8 @@ impl<'a> Scene<'a> {
 mod tests {
     use vec::Vec3;
     use ray::Ray;
-    use scene::Scene;
-    use scene::Intersected;
+    use scene::{Scene, Intersected};
+    use scene::shapes::SpherePrim;
     use scene::shapes::sphere::Sphere;
     use scene::material::{Color, Material};
 
@@ -129,7 +129,7 @@ mod tests {
         let mut sphere = Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
         sphere.materials.insert(0, Material::init(Color::init(1.0, 0.0, 0.0)));
         let mut scene = Scene::new();
-        scene.shapes.push(box sphere);
+        scene.primitives.push(SpherePrim(sphere));
         scene
     }
 
@@ -137,7 +137,7 @@ mod tests {
     fn can_init_scene() {
         let scene = Scene::new();
         assert!(scene.lights.len() == 0);
-        assert!(scene.shapes.len() == 0);
+        assert!(scene.primitives.len() == 0);
     }
 
     #[test]
