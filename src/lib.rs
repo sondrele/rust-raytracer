@@ -1,10 +1,15 @@
 extern crate bmp;
 
+use std::num::Float;
+use std::num::FloatMath;
+
 use bmp::Image;
 
 use vec::Vec3;
 use ray::Ray;
 use scene::{Scene, Light};
+use scene::LightType::{DirectionalLight, PointLight, AreaLight};
+use scene::SceneIntersection::{Intersected, Missed};
 use scene::material::Color;
 use scene::intersection::Intersection;
 
@@ -59,7 +64,7 @@ impl<'a> RayTracer<'a> {
     fn setup_camera(&mut self) {
         let cam = match self.scene {
             Some(ref scene) => scene.camera,
-            None => fail!("RayTracer has not been assigned any Scene")
+            None => panic!("RayTracer has not been assigned any Scene")
         };
 
         self.parallel_right = cam.view_dir.cross(cam.ortho_up);
@@ -99,28 +104,28 @@ impl<'a> RayTracer<'a> {
 
         let dest: Vec3 = light.pos;
         let (ori, dir) = match light.kind {
-            scene::DirectionalLight => {
+            DirectionalLight => {
                 let dir = light.dir.invert();
                 let ori = intersection.point() + dir.mult(0.0001);
                 (ori, dir)
             },
-            scene::PointLight => {
+            PointLight => {
                 let mut ori = intersection.point();
                 let mut dir = dest - ori;
                 dir.normalize();
                 ori = ori + dir.mult(0.0001);
                 (ori, dir)
             },
-            scene::AreaLight => return Color::new()
+            AreaLight => return Color::new()
         };
 
         let shadow = Ray::init(ori, dir);
         match scene.intersects(shadow) {
-            scene::Intersected(intersection) => {
+            Intersected(intersection) => {
                 let material = intersection.material();
                 if material.transparency == 0.0 {
                     match light.kind {
-                        scene::PointLight if ori.distance(intersection.point()) > ori.distance(dest) =>
+                        PointLight if ori.distance(intersection.point()) > ori.distance(dest) =>
                             Color::init(1.0, 1.0, 1.0), // Intersects with object behind light source
                         _ => Color::new() // Hit something before directional light, ignoring area light
                     }
@@ -129,7 +134,7 @@ impl<'a> RayTracer<'a> {
                     shade * RayTracer::shadow_scalar(scene, light, &intersection, depth - 1)
                 }
             },
-            scene::Missed => Color::init(1.0, 1.0, 1.0) // The point is in direct light
+            Missed => Color::init(1.0, 1.0, 1.0) // The point is in direct light
         }
     }
 
@@ -139,7 +144,7 @@ impl<'a> RayTracer<'a> {
 
     fn calculate_fattj(light: &Light, point: Vec3) -> f32 {
         match light.kind {
-            scene::DirectionalLight => 1.0,
+            DirectionalLight => 1.0,
             _ => {
                 let distance = point.distance(light.pos);
                 (1.0 as f32).min(1.0 / (0.25 + 0.1 * distance + 0.01 * distance * distance))
@@ -175,14 +180,14 @@ impl<'a> RayTracer<'a> {
 
         let mut dj: Vec3;
         match light.kind {
-            scene::DirectionalLight => {
+            DirectionalLight => {
                 dj = light.dir.invert();
             },
-            scene::PointLight => {
+            PointLight => {
                 dj = light.pos - point;
                 dj.normalize();
             },
-            scene::AreaLight => return Color::new()
+            AreaLight => return Color::new()
         }
 
         let normal: Vec3 = intersection.surface_normal();
@@ -219,9 +224,9 @@ impl<'a> RayTracer<'a> {
         let reflective_light = if ks.scalar() > 0.0 {
             let ray: Ray = intersection.reflective_ray();
             match scene.intersects(ray) {
-                scene::Intersected(intersection) =>
+                Intersected(intersection) =>
                     ks * RayTracer::shade_intersection(scene, &intersection, depth - 1),
-                scene::Missed => Color::new()
+                Missed => Color::new()
             }
         } else {
             Color::new()
@@ -230,9 +235,9 @@ impl<'a> RayTracer<'a> {
         let refractive_light = if kt > 0.0 {
             match intersection.refractive_ray() {
                 Some(ray) => match scene.intersects(ray) {
-                    scene::Intersected(intersection) =>
+                    Intersected(intersection) =>
                         RayTracer::shade_intersection(scene, &intersection, depth - 1).mult(kt),
-                    scene::Missed => Color::new()
+                    Missed => Color::new()
                 },
                 None => Color::new()
             }
@@ -252,23 +257,25 @@ impl<'a> RayTracer<'a> {
                     for x in range(0, self.height as i32) {
                         let ray = self.compute_ray(x as f32, y as f32);
                         match scene.intersects(ray) {
-                            scene::Intersected(intersection) => {
+                            Intersected(intersection) => {
                                 let color = RayTracer::shade_intersection(scene, &intersection, self.depth);
                                 img.set_pixel(x as uint, y as uint, color.as_pixel());
                             },
-                            scene::Missed => ()
+                            Missed => ()
                         }
                     }
                 }
                 img
             },
-            None => fail!("RayTracer has not been assigned any Scene")
+            None => panic!("RayTracer has not been assigned any Scene")
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::f32::consts;
+    use std::num::Float;
     use RayTracer;
     use vec::Vec3;
     use scene::{Scene, Camera};
@@ -278,7 +285,7 @@ mod tests {
         scene.camera = Camera::new();
         scene.camera.view_dir = Vec3::init(0.0, 0.0, -1.0);
         scene.camera.ortho_up = Vec3::init(0.0, 1.0, 0.0);
-        let pi: f32 = Float::pi();
+        let pi: f32 = consts::PI;
         scene.camera.vertical_fov = pi / 2.0;
         let mut rt = RayTracer::init(2, 2, 2);
         rt.set_scene(scene);

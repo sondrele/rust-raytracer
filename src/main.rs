@@ -2,7 +2,7 @@ extern crate rstracer;
 extern crate getopts;
 
 use std::os;
-use std::from_str::FromStr;
+use std::str::FromStr;
 use getopts::{Matches, optopt, optflag, getopts, OptGroup};
 
 use rstracer::scene::parser::SceneParser;
@@ -13,7 +13,7 @@ fn parse_command_line(program: &str, args: &[String], opts: &[OptGroup]) -> Matc
         Ok(m) => m,
         Err(f) => {
             println!("{}", getopts::usage(program, opts));
-            fail!(f.to_string())
+            panic!(f.to_string())
         }
     }
 }
@@ -49,9 +49,9 @@ fn main() {
         optopt("i", "scene", "The name of a scene located in the ./scenes directory", "-i test01"),
         optopt("o", "out", "The name of the image to be generated", "-o image.bmp")
     ];
-    let matches = parse_command_line(program, args.tail(), opts);
+    let matches = parse_command_line(program, args.tail(), &opts);
     if matches.opt_present("h") {
-        println!("{}", getopts::usage(program, opts));
+        println!("{}", getopts::usage(program, &opts));
         return;
     }
 

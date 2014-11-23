@@ -1,9 +1,8 @@
-use std::fmt;
+use std::num::FloatMath;
 
 use vec::Vec3;
 use ray::Ray;
 use scene::material::{Material, Color};
-use scene::shapes;
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
 #[deriving(Show)]
@@ -40,14 +39,8 @@ impl Index<u32, f32> for Vertex {
             &0 => &self.position[0],
             &1 => &self.position[1],
             &2 => &self.position[2],
-            _ => fail!("Index out of bound: {}", index)
+            _ => panic!("Index out of bound: {}", index)
         }
-    }
-}
-
-impl fmt::Show for [Vertex, ..3] {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "[{} {} {}]", self[0], self[1], self[2])
     }
 }
 
@@ -86,7 +79,7 @@ impl Poly {
         let area2 = Vec3::get_area(self[1].position, self[2].position, point) / area;
 
         if area0 > 1.0 || area1 > 1.0 || area2 > 1.0 {
-            fail!("Cannot get area, as point is outside of poly")
+            panic!("Cannot get area, as point is outside of poly")
         }
 
         (area0, area1, area2)
@@ -115,7 +108,7 @@ impl Index<u32, Vertex> for Poly {
             &0 => &self.vertices[0],
             &1 => &self.vertices[1],
             &2 => &self.vertices[2],
-            _ => fail!("Index out of bound: {}", index)
+            _ => panic!("Index out of bound: {}", index)
         }
     }
 }
@@ -151,7 +144,7 @@ impl Shape for Poly {
         let a0: f32 = e1.dot(h);
 
         if a0 > -0.0000001 && a0 < 0.0000001 {
-            return shapes::Missed;
+            return ShapeIntersection::Missed;
         }
 
         let f: f32 = 1.0 / a0;
@@ -159,14 +152,14 @@ impl Shape for Poly {
         let u: f32 = f * s.dot(h);
 
         if u < 0.0 || u > 1.0 {
-            return shapes::Missed;
+            return ShapeIntersection::Missed;
         }
 
         let q: Vec3 = s.cross(e1);
         let v: f32 = f * d.dot(q);
 
         if v < 0.0 || u + v > 1.0 {
-            return shapes::Missed;
+            return ShapeIntersection::Missed;
         }
 
         // at this stage we can compute t to find out where
@@ -174,8 +167,8 @@ impl Shape for Poly {
         let t: f32 = f * e2.dot(q);
 
         match t > 0.0000001 {
-            true => shapes::Hit(t), // ray intersection
-            false => shapes::Missed // this means that there is
+            true => ShapeIntersection::Hit(t), // ray intersection
+            false => ShapeIntersection::Missed // this means that there is
             // a line intersection but not a ray intersection
         }
     }
@@ -207,9 +200,11 @@ impl Shape for Poly {
 
 #[cfg(test)]
 mod tests {
+    use std::num::Float;
+
     use ray::Ray;
     use vec::Vec3;
-    use scene::shapes::{Shape, Hit};
+    use scene::shapes::{Shape, ShapeIntersection};
     use scene::shapes::poly::{Poly, Vertex};
 
     fn assert_approx_eq(a: f32, b: f32) {
@@ -238,8 +233,8 @@ mod tests {
         let ray = Ray::init(Vec3::init(0.0, SIN_PI_4, 0.0), Vec3::init(0.0, 0.0, -1.0));
 
         match poly.intersects(ray) {
-            Hit(point) => assert_approx_eq(point, 2.292893),
-            _ => fail!("Ray should have intersected at {}", 2.292893 as f32)
+            ShapeIntersection::Hit(point) => assert_approx_eq(point, 2.292893),
+            _ => panic!("Ray should have intersected at {}", 2.292893 as f32)
         }
     }
 }

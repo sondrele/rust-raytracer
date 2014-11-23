@@ -3,6 +3,7 @@ use std::mem::swap;
 use vec::Vec3;
 use ray::Ray;
 use scene::material::{Material, Color};
+use self::Primitive::{Sphere, Poly};
 
 pub mod sphere;
 pub mod poly;

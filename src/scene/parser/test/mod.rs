@@ -1,7 +1,8 @@
 use vec::Vec3;
 use scene::parser::SceneParser;
 use scene::material::Color;
-use scene::{Light, PointLight, DirectionalLight, AreaLight};
+use scene::Light;
+use scene::LightType::{DirectionalLight, PointLight, AreaLight};
 
 static TEST_PATH : &'static str   = "src/scene/parser/test/testdata-";
 

@@ -1,3 +1,4 @@
+use std::num::Float;
 use ray::Ray;
 use vec::Vec3;
 use scene::shapes::{Primitive, Shape};

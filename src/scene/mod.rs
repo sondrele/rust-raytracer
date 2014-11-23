@@ -1,8 +1,10 @@
 use vec::Vec3;
 use ray::Ray;
 use scene::material::Color;
-use scene::shapes::Shape;
+use scene::shapes::{Shape, ShapeIntersection};
 use scene::intersection::Intersection;
+use self::SceneIntersection::{Intersected, Missed};
+
 
 pub mod parser;
 pub mod material;
@@ -85,12 +87,12 @@ impl<'a> Scene<'a> {
 
         for prim in self.primitives.iter() {
             match prim.intersects(ray) {
-                shapes::Hit(new_point) if !has_intersected => {
+                ShapeIntersection::Hit(new_point) if !has_intersected => {
                     has_intersected = true;
                     point = new_point;
                     intersection = Intersected(Intersection::new(point, ray, prim));
                 },
-                shapes::Hit(new_point) if has_intersected && new_point < point => {
+                ShapeIntersection::Hit(new_point) if has_intersected && new_point < point => {
                     point = new_point;
                     intersection = Intersected(Intersection::new(point, ray, prim));
                 },
@@ -106,15 +108,15 @@ impl<'a> Scene<'a> {
 mod tests {
     use vec::Vec3;
     use ray::Ray;
-    use scene::{Scene, Intersected};
-    use scene::shapes::{sphere, Sphere};
+    use scene::{Scene, SceneIntersection};
+    use scene::shapes::{sphere, Primitive};
     use scene::material::{Color, Material};
 
     fn create_scene<'a>() -> Scene<'a> {
         let mut sphere = sphere::Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
         sphere.materials.insert(0, Material::init(Color::init(1.0, 0.0, 0.0)));
         let mut scene = Scene::new();
-        scene.primitives.push(Sphere(sphere));
+        scene.primitives.push(Primitive::Sphere(sphere));
         scene
     }
 
@@ -130,11 +132,11 @@ mod tests {
         let scene = create_scene();
 
         match scene.intersects(Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))) {
-            Intersected(intersection) => {
+            SceneIntersection::Intersected(intersection) => {
                 let color = intersection.color();
                 assert_eq!(Color::init(1.0, 0.0, 0.0), color)
             },
-            _ => fail!("Ray did not intersect scene")
+            _ => panic!("Ray did not intersect scene")
         }
     }
 }

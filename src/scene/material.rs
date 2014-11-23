@@ -1,3 +1,4 @@
+use std::num::Float;
 use bmp::Pixel;
 
 #[deriving(PartialEq, Clone, Show)]

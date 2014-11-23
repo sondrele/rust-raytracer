@@ -1,11 +1,13 @@
 use std::io;
 use std::io::{BufferedReader, File};
-use std::from_str::FromStr;
+use std::str::FromStr;
 
 use vec::Vec3;
-use scene::{Scene, Camera, Light, PointLight, DirectionalLight, AreaLight};
+use scene::{Scene, Camera, Light};
+use scene::LightType::{DirectionalLight, PointLight, AreaLight};
 use scene::material::{Material, Color};
-use scene::shapes::{sphere, poly, Sphere, Poly};
+use scene::shapes::{sphere, poly};
+use scene::shapes::Primitive::{Sphere, Poly};
 
 pub struct SceneParser {
     reader: BufferedReader<File>,
@@ -27,7 +29,7 @@ impl SceneParser {
     fn read_file(path: String) -> BufferedReader<File> {
         match File::open(&Path::new(path.clone())) {
             Ok(f) => BufferedReader::new(f),
-            Err(e) => fail!("file error: {}, path: {}", e, path.clone())
+            Err(e) => panic!("file error: {}, path: {}", e, path.clone())
         }
     }
 
@@ -39,7 +41,7 @@ impl SceneParser {
         if self.peaked {
             match self.last_token {
                 Some(ref tkn) => { return tkn.clone(); },
-                None => fail!("The peaked word does not exist")
+                None => panic!("The peaked word does not exist")
             }
         }
         let tkn = self.next_token();
@@ -52,7 +54,7 @@ impl SceneParser {
         if self.peaked {
             let tkn = match self.last_token {
                 Some(ref tkn) => tkn.clone(),
-                None => fail!("The peaked word does not exist")
+                None => panic!("The peaked word does not exist")
             };
             self.last_token = None;
             self.peaked = false;
@@ -68,7 +70,7 @@ impl SceneParser {
                         self.finished = true;
                         return buf.to_string();
                     },
-                    _ => fail!("Read error: {}", e)
+                    _ => panic!("Read error: {}", e)
                 }
             };
             if !c.is_whitespace() {
@@ -83,7 +85,7 @@ impl SceneParser {
         let tkn = self.next_token();
         match from_str::<T>(tkn.as_slice()) {
             Some(f) => f,
-            None => fail!("Token '{}'", tkn)
+            None => panic!("Token '{}'", tkn)
         }
     }
 
@@ -126,7 +128,7 @@ impl SceneParser {
             "point_light" => PointLight,
             "area_light" => AreaLight,
             "directional_light" => DirectionalLight,
-            _ => fail!("LightType is not valid: {}", keyword)
+            _ => panic!("LightType is not valid: {}", keyword)
         };
 
         self.check_and_consume("{");
@@ -342,12 +344,12 @@ impl SceneParser {
                     for _ in range(0, polyset.len()) {
                         match polyset.pop() {
                             Some(poly) => scene.primitives.push(Poly(poly)),
-                            None => fail!("Incorrect amount of polys in polyset")
+                            None => panic!("Incorrect amount of polys in polyset")
                         }
                     }
                 },
                 token if token.ends_with("light") => scene.lights.push(self.parse_light()),
-                _ => fail!("Unexpected token: {}", tkn)
+                _ => panic!("Unexpected token: {}", tkn)
             }
             tkn = self.peak();
         }

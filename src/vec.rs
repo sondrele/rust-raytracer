@@ -1,3 +1,4 @@
+use std::num::Float;
 
 #[deriving(Show)]
 pub struct Vec3 {
@@ -36,7 +37,7 @@ impl Index<u32, f32> for Vec3 {
             &0 => &self.x,
             &1 => &self.y,
             &2 => &self.z,
-            _ => fail!("Index out of bounds: {}", index)
+            _ => panic!("Index out of bounds: {}", index)
         }
     }
 }
