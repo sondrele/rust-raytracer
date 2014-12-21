@@ -34,7 +34,7 @@ fn get_str(matches: &Matches, opt: &str, default: &str) -> String {
 
 fn get_scene(matches: &Matches, default: &str) -> String {
     let name = get_str(matches, "i", default);
-    String::from_str("scenes/") + name + String::from_str(".ascii")
+    String::from_str("scenes/") + name.as_slice() + ".ascii"
 }
 
 #[allow(dead_code)]
@@ -58,7 +58,7 @@ fn main() {
     let size = get_opt(&matches, "s", 100);
     let depth = get_opt(&matches, "d", 10);
     let scene = get_scene(&matches, "test01");
-    let out = get_str(&matches, "o", "img") + String::from_str(".bmp");
+    let out = get_str(&matches, "o", "img") + ".bmp";
 
     let mut parser = SceneParser::new(scene);
     let scene = parser.parse_scene();

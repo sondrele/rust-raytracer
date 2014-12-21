@@ -14,13 +14,14 @@ pub mod intersection;
 // Is it possible to mplement traits instead of using enums,
 // make the fields private data and call trait methods
 // according to the different types of lights?
-#[deriving(PartialEq, Clone, Show)]
+#[deriving(Copy, PartialEq, Clone, Show)]
 pub enum LightType {
     PointLight,
     AreaLight,
     DirectionalLight
 }
 
+#[deriving(Copy)]
 pub struct Light {
     pub kind: LightType,
     pub pos: Vec3,
@@ -39,6 +40,7 @@ impl Light {
     }
 }
 
+#[deriving(Copy)]
 pub struct Camera {
     pub pos: Vec3,
     pub view_dir: Vec3,
@@ -79,7 +81,7 @@ impl<'a> Scene<'a> {
         }
     }
 
-    pub fn intersects(&'a self, ray: Ray) -> SceneIntersection {
+    pub fn intersects(&'a self, ray: &Ray) -> SceneIntersection {
         let mut intersection = Missed;
         let mut point: f32 = 0.0;
 
@@ -90,11 +92,11 @@ impl<'a> Scene<'a> {
                 ShapeIntersection::Hit(new_point) if !has_intersected => {
                     has_intersected = true;
                     point = new_point;
-                    intersection = Intersected(Intersection::new(point, ray, prim));
+                    intersection = Intersected(Intersection::new(point, ray.clone(), prim));
                 },
                 ShapeIntersection::Hit(new_point) if has_intersected && new_point < point => {
                     point = new_point;
-                    intersection = Intersected(Intersection::new(point, ray, prim));
+                    intersection = Intersected(Intersection::new(point, ray.clone(), prim));
                 },
                 _ => ()
             }

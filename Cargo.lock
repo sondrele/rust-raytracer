@@ -2,11 +2,11 @@
 name = "rstracer"
 version = "0.0.2"
 dependencies = [
- "bmp 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bmp 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "bmp"
-version = "0.0.2"
+version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 

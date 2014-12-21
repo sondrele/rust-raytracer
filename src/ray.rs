@@ -2,6 +2,7 @@ use std::cell::Cell;
 
 use vec::Vec3;
 
+#[deriving(Clone)]
 pub struct Ray {
     pub ori: Vec3,
     pub dir: Vec3,

@@ -5,7 +5,7 @@ use ray::Ray;
 use scene::material::{Material, Color};
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
-#[deriving(Show)]
+#[deriving(Copy, Show)]
 pub struct Vertex {
     pub mat_index: u32,
     pub has_normal: bool,
@@ -130,7 +130,7 @@ impl Shape for Poly {
         BoundingBox::init(min, max)
     }
 
-    fn intersects(&self, ray: Ray) -> ShapeIntersection {
+    fn intersects(&self, ray: &Ray) -> ShapeIntersection {
         let p: Vec3 = ray.ori;
         let d: Vec3 = ray.dir;
         let v0: Vec3 = self[0].position;

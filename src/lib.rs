@@ -97,7 +97,7 @@ impl<'a> RayTracer<'a> {
         Ray::init(self.camera_pos, dir)
     }
 
-    fn shadow_scalar<'a>(scene: &Scene<'a>, light: &Light, intersection: &Intersection, depth: uint) -> Color {
+    fn shadow_scalar<'b>(scene: &Scene<'a>, light: &Light, intersection: &Intersection, depth: uint) -> Color {
         if depth <= 0 {
             return Color::new();
         }
@@ -120,7 +120,7 @@ impl<'a> RayTracer<'a> {
         };
 
         let shadow = Ray::init(ori, dir);
-        match scene.intersects(shadow) {
+        match scene.intersects(&shadow) {
             Intersected(intersection) => {
                 let material = intersection.material();
                 if material.transparency == 0.0 {
@@ -199,7 +199,7 @@ impl<'a> RayTracer<'a> {
         direct_light * (diffuse_light + specular_light)
     }
 
-    fn shade_intersection<'a>(scene: &Scene<'a>, intersection: &Intersection, depth: uint) -> Color {
+    fn shade_intersection<'b>(scene: &Scene<'a>, intersection: &Intersection, depth: uint) -> Color {
         if depth <= 0 {
             return Color::new();
         }
@@ -223,7 +223,7 @@ impl<'a> RayTracer<'a> {
 
         let reflective_light = if ks.scalar() > 0.0 {
             let ray: Ray = intersection.reflective_ray();
-            match scene.intersects(ray) {
+            match scene.intersects(&ray) {
                 Intersected(intersection) =>
                     ks * RayTracer::shade_intersection(scene, &intersection, depth - 1),
                 Missed => Color::new()
@@ -234,7 +234,7 @@ impl<'a> RayTracer<'a> {
 
         let refractive_light = if kt > 0.0 {
             match intersection.refractive_ray() {
-                Some(ray) => match scene.intersects(ray) {
+                Some(ray) => match scene.intersects(&ray) {
                     Intersected(intersection) =>
                         RayTracer::shade_intersection(scene, &intersection, depth - 1).mult(kt),
                     Missed => Color::new()
@@ -256,7 +256,7 @@ impl<'a> RayTracer<'a> {
                 for y in range(0, self.width as i32) {
                     for x in range(0, self.height as i32) {
                         let ray = self.compute_ray(x as f32, y as f32);
-                        match scene.intersects(ray) {
+                        match scene.intersects(&ray) {
                             Intersected(intersection) => {
                                 let color = RayTracer::shade_intersection(scene, &intersection, self.depth);
                                 img.set_pixel(x as uint, y as uint, color.as_pixel());

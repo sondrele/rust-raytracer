@@ -51,7 +51,7 @@ impl Shape for Sphere {
         )
     }
 
-    fn intersects(&self, ray: Ray) -> ShapeIntersection {
+    fn intersects(&self, ray: &Ray) -> ShapeIntersection {
         // Transforming ray to object space
         let transformed_origin = ray.ori - self.origin;
 

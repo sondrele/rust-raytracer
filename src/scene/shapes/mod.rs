@@ -13,6 +13,7 @@ pub enum ShapeIntersection<'a> {
     Missed
 }
 
+#[deriving(Copy)]
 pub struct BoundingBox {
     min: Vec3,
     max: Vec3
@@ -33,7 +34,7 @@ impl BoundingBox {
         }
     }
 
-    pub fn intersects(&self, ray: Ray) -> bool {
+    pub fn intersects(&self, ray: &Ray) -> bool {
         let ori = ray.ori;
         let dir = ray.dir;
 
@@ -78,7 +79,7 @@ impl BoundingBox {
 pub trait Shape {
     fn get_bbox(&self) -> BoundingBox;
 
-    fn intersects(&self, ray: Ray) -> ShapeIntersection;
+    fn intersects(&self, ray: &Ray) -> ShapeIntersection;
 
     fn surface_normal(&self, direction: Vec3, point: Vec3) -> Vec3;
 
@@ -100,7 +101,7 @@ impl Shape for Primitive {
         }
     }
 
-    fn intersects(&self, ray: Ray) -> ShapeIntersection {
+    fn intersects(&self, ray: &Ray) -> ShapeIntersection {
         match self {
             &Poly(ref poly) => poly.intersects(ray),
             &Sphere(ref sphere) => sphere.intersects(ray),

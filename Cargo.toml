@@ -5,4 +5,4 @@ version = "0.0.2"
 authors = ["Sondre Lefsaker"]
 
 [dependencies]
-bmp="*"
+bmp="0.0.3"
