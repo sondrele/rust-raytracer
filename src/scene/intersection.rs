@@ -1,20 +1,21 @@
+use std::num::Float;
 use ray::Ray;
 use vec::Vec3;
-use scene::shapes::Shape;
+use scene::shapes::{Primitive, Shape};
 use scene::material;
 
 pub struct Intersection<'a> {
     point: f32,
     ray: Ray,
-    shape: &'a Box<Shape+'a>
+    prim: &'a Primitive
 }
 
 impl<'a> Intersection<'a> {
-    pub fn new(point: f32, ray: Ray, shape: &'a Box<Shape>) -> Intersection<'a> {
+    pub fn new(point: f32, ray: Ray, prim: &'a Primitive) -> Intersection<'a> {
         Intersection {
             point: point,
             ray: ray,
-            shape: shape
+            prim: prim
         }
     }
 
@@ -27,15 +28,15 @@ impl<'a> Intersection<'a> {
     }
 
     pub fn color(&self) -> material::Color {
-        self.shape.diffuse_color(self.point())
+        self.prim.diffuse_color(self.point())
     }
 
     pub fn material(&self) -> material::Material {
-        self.shape.get_material()
+        self.prim.get_material()
     }
 
     pub fn surface_normal(&self) -> Vec3 {
-        self.shape.surface_normal(self.ray.dir, self.point())
+        self.prim.surface_normal(self.ray.dir, self.point())
     }
 
     pub fn reflective_ray(&self) -> Ray {

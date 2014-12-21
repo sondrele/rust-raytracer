@@ -1,9 +1,11 @@
 use std::mem::swap;
 use std::cmp;
+use std::num::FloatMath;
 
 use vec::Vec3;
 use ray::Ray;
 use scene::material::{Material, Color};
+use self::Primitive::{Sphere, Poly};
 
 pub mod sphere;
 pub mod poly;
@@ -13,6 +15,7 @@ pub enum ShapeIntersection<'a> {
     Missed
 }
 
+#[deriving(Copy)]
 pub struct BoundingBox {
     min: Vec3,
     max: Vec3
@@ -37,7 +40,7 @@ impl BoundingBox {
         self.min.mult(0.5) + self.max.mult(0.5)
     }
 
-    pub fn intersects(&self, ray: Ray) -> bool {
+    pub fn intersects(&self, ray: &Ray) -> bool {
         let ori = ray.ori;
         let dir = ray.dir;
 
@@ -80,7 +83,7 @@ impl BoundingBox {
 }
 
 impl Add<BoundingBox, BoundingBox> for BoundingBox {
-    fn add(&self, other: &BoundingBox) -> BoundingBox {
+    fn add(self, other: BoundingBox) -> BoundingBox {
         let min = Vec3::init(
             self.min[0].min(other.min[0]),
             self.min[1].min(other.min[1]),
@@ -119,14 +122,54 @@ impl PartialOrd for BoundingBox {
 pub trait Shape {
     fn get_bbox(&self) -> BoundingBox;
 
-    fn intersects(&self, ray: Ray) -> ShapeIntersection;
+    fn intersects(&self, ray: &Ray) -> ShapeIntersection;
 
     fn surface_normal(&self, direction: Vec3, point: Vec3) -> Vec3;
 
     fn get_material(&self) -> Material;
 
-    fn diffuse_color(&self, _: Vec3) -> Color {
-      self.get_material().diffuse
+    fn diffuse_color(&self, point: Vec3) -> Color;
+}
+
+pub enum Primitive {
+    Poly(poly::Poly),
+    Sphere(sphere::Sphere)
+}
+
+impl Shape for Primitive {
+    fn get_bbox(&self) -> BoundingBox {
+        match self {
+            &Poly(ref poly) => poly.get_bbox(),
+            &Sphere(ref sphere) => sphere.get_bbox(),
+        }
+    }
+
+    fn intersects(&self, ray: &Ray) -> ShapeIntersection {
+        match self {
+            &Poly(ref poly) => poly.intersects(ray),
+            &Sphere(ref sphere) => sphere.intersects(ray),
+        }
+    }
+
+    fn surface_normal(&self, direction: Vec3, point: Vec3) -> Vec3 {
+        match self {
+            &Poly(ref poly) => poly.surface_normal(direction, point),
+            &Sphere(ref sphere) => sphere.surface_normal(direction, point),
+        }
+    }
+
+    fn get_material(&self) -> Material {
+        match self {
+            &Poly(ref poly) => poly.get_material(),
+            &Sphere(ref sphere) => sphere.get_material(),
+        }
+    }
+
+    fn diffuse_color(&self, point: Vec3) -> Color {
+        match self {
+            &Poly(ref poly) => poly.diffuse_color(point),
+            &Sphere(_) => self.get_material().diffuse,
+        }
     }
 }
 
@@ -152,7 +195,7 @@ mod tests {
         let bbox = s.get_bbox();
         let ray = Ray::init(Vec3::init(0.0, 0.0, -2.0), Vec3::init(0.0, 0.0, -1.0));
 
-        assert!(bbox.intersects(ray));
+        assert!(bbox.intersects(&ray));
     }
 
     #[test]

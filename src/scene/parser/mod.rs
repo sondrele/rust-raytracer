@@ -1,12 +1,13 @@
 use std::io;
 use std::io::{BufferedReader, File};
-use std::from_str::FromStr;
+use std::str::FromStr;
 
 use vec::Vec3;
-use scene::{Scene, Camera, Light, PointLight, DirectionalLight, AreaLight};
+use scene::{Scene, Camera, Light};
+use scene::LightType::{DirectionalLight, PointLight, AreaLight};
 use scene::material::{Material, Color};
-use scene::shapes::sphere::Sphere;
-use scene::shapes::poly::{Poly, Vertex};
+use scene::shapes::{sphere, poly};
+use scene::shapes::Primitive::{Sphere, Poly};
 
 pub struct SceneParser {
     reader: BufferedReader<File>,
@@ -28,7 +29,7 @@ impl SceneParser {
     fn read_file(path: String) -> BufferedReader<File> {
         match File::open(&Path::new(path.clone())) {
             Ok(f) => BufferedReader::new(f),
-            Err(e) => fail!("file error: {}, path: {}", e, path.clone())
+            Err(e) => panic!("file error: {}, path: {}", e, path.clone())
         }
     }
 
@@ -40,7 +41,7 @@ impl SceneParser {
         if self.peaked {
             match self.last_token {
                 Some(ref tkn) => { return tkn.clone(); },
-                None => fail!("The peaked word does not exist")
+                None => panic!("The peaked word does not exist")
             }
         }
         let tkn = self.next_token();
@@ -53,7 +54,7 @@ impl SceneParser {
         if self.peaked {
             let tkn = match self.last_token {
                 Some(ref tkn) => tkn.clone(),
-                None => fail!("The peaked word does not exist")
+                None => panic!("The peaked word does not exist")
             };
             self.last_token = None;
             self.peaked = false;
@@ -69,7 +70,7 @@ impl SceneParser {
                         self.finished = true;
                         return buf.to_string();
                     },
-                    _ => fail!("Read error: {}", e)
+                    _ => panic!("Read error: {}", e)
                 }
             };
             if !c.is_whitespace() {
@@ -84,7 +85,7 @@ impl SceneParser {
         let tkn = self.next_token();
         match from_str::<T>(tkn.as_slice()) {
             Some(f) => f,
-            None => fail!("Token '{}'", tkn)
+            None => panic!("Token '{}'", tkn)
         }
     }
 
@@ -127,7 +128,7 @@ impl SceneParser {
             "point_light" => PointLight,
             "area_light" => AreaLight,
             "directional_light" => DirectionalLight,
-            _ => fail!("LightType is not valid: {}", keyword)
+            _ => panic!("LightType is not valid: {}", keyword)
         };
 
         self.check_and_consume("{");
@@ -174,7 +175,7 @@ impl SceneParser {
         material
     }
 
-    fn parse_sphere(&mut self) -> Sphere {
+    fn parse_sphere(&mut self) -> sphere::Sphere {
         self.check_and_consume("sphere");
         self.check_and_consume("{");
         self.check_and_consume("name");
@@ -182,7 +183,7 @@ impl SceneParser {
         self.check_and_consume("numMaterials");
 
         let mut num_materials: i32 = self.next_num();
-        let mut sphere = Sphere::new();
+        let mut sphere = sphere::Sphere::new();
         while num_materials > 0 {
             let material = self.parse_material();
             sphere.materials.push(material);
@@ -202,8 +203,8 @@ impl SceneParser {
         sphere
     }
 
-    fn parse_vertex(&mut self, has_normal: bool, has_material: bool) -> Vertex {
-        let mut vertex = Vertex::init(self.parse_vec3("pos"));
+    fn parse_vertex(&mut self, has_normal: bool, has_material: bool) -> poly::Vertex {
+        let mut vertex = poly::Vertex::init(self.parse_vec3("pos"));
 
         match has_normal {
             true => {
@@ -223,13 +224,13 @@ impl SceneParser {
         vertex
     }
 
-    fn parse_poly(&mut self, has_normal: bool, has_material: bool) -> Poly {
+    fn parse_poly(&mut self, has_normal: bool, has_material: bool) -> poly::Poly {
         self.check_and_consume("poly");
         self.check_and_consume("{");
         self.check_and_consume("numVertices");
         self.consume_next(); // Always 3
 
-        let poly = Poly {
+        let poly = poly::Poly {
             materials: Vec::new(),
             vertices: [
                 self.parse_vertex(has_normal, has_material),
@@ -243,7 +244,7 @@ impl SceneParser {
         poly
     }
 
-    fn parse_polyset(&mut self) -> Vec<Poly> {
+    fn parse_polyset(&mut self) -> Vec<poly::Poly> {
         self.check_and_consume("poly_set");
         self.check_and_consume("{");
         self.check_and_consume("name");
@@ -335,20 +336,20 @@ impl SceneParser {
                 "camera" => scene.camera = self.parse_camera(),
                 "sphere" => {
                     let sphere = self.parse_sphere();
-                    scene.shapes.push(box sphere);
+                    scene.primitives.push(Sphere(sphere));
                 },
                 "poly_set" => {
                     let mut polyset = self.parse_polyset();
 
                     for _ in range(0, polyset.len()) {
                         match polyset.pop() {
-                            Some(poly) => scene.shapes.push(box poly),
-                            None => fail!("Incorrect amount of polys in polyset")
+                            Some(poly) => scene.primitives.push(Poly(poly)),
+                            None => panic!("Incorrect amount of polys in polyset")
                         }
                     }
                 },
                 token if token.ends_with("light") => scene.lights.push(self.parse_light()),
-                _ => fail!("Unexpected token: {}", tkn)
+                _ => panic!("Unexpected token: {}", tkn)
             }
             tkn = self.peak();
         }
@@ -358,206 +359,4 @@ impl SceneParser {
 }
 
 #[cfg(test)]
-mod test_parser {
-    use vec::Vec3;
-    use parser::SceneParser;
-    use scene::material::Color;
-    use scene::{ Light, PointLight, DirectionalLight, AreaLight };
-
-    static TEST_PATH : &'static str   = "src/parser/test/testdata-";
-
-    fn scene_parser(name: &str) -> SceneParser {
-        let mut test_name = TEST_PATH.to_string();
-        test_name.push_str(name);
-        test_name.push_str(".txt");
-        SceneParser::new(test_name)
-    }
-
-    #[test]
-    fn can_parse_tokens() {
-        let mut parser = scene_parser("light");
-
-        let fst = parser.next_token();
-        assert_eq!("point_light", fst.as_slice());
-
-        let snd = parser.next_token();
-        assert_eq!("{", snd.as_slice());
-
-        let thrd = parser.next_token();
-        assert_eq!("position", thrd.as_slice());
-
-        let frth = parser.next_token();
-        assert_eq!("-1", frth.as_slice());
-
-        let mut tkn = "".to_string();
-        while parser.has_next_token() {
-            tkn = parser.next_token();
-        }
-        assert_eq!("}", tkn.as_slice());
-    }
-
-    #[test]
-    fn can_peak_at_next_token() {
-        let mut parser = scene_parser("light");
-
-        let tkn = parser.next_token();
-        assert_eq!("point_light", tkn.as_slice());
-
-        let tkn = parser.peak();
-        assert_eq!("{", tkn.as_slice());
-
-        let tkn = parser.peak();
-        assert_eq!("{", tkn.as_slice());
-
-        let tkn = parser.next_token();
-        assert_eq!("{", tkn.as_slice());
-
-        let tkn = parser.next_token();
-        assert_eq!("position", tkn.as_slice());
-    }
-
-    #[test]
-    fn can_parse_f32() {
-        let mut parser = scene_parser("f32");
-        let fst: f32 = parser.next_num();
-        assert_eq!(1.5, fst);
-
-        let snd: f32 = parser.next_num();
-        assert_eq!(-0.5, snd);
-    }
-
-    #[test]
-    fn can_parse_position() {
-        let mut parser = scene_parser("position");
-        let pos: Vec3 = parser.parse_vec3("position");
-        assert_eq!(-1.0, pos.x);
-        assert_eq!(0.0, pos.y);
-        assert_eq!(2.0, pos.z);
-    }
-
-    #[test]
-    fn can_parse_color() {
-        let mut parser = scene_parser("color");
-        let color: Color = parser.parse_color("color");
-        assert_eq!(1.0, color.r_val());
-        assert_eq!(0.0, color.g_val());
-        assert_eq!(0.5, color.b_val());
-    }
-
-    #[test]
-    fn can_parse_light() {
-        let mut parser = scene_parser("light");
-        let p_light: Light = parser.parse_light();
-        assert_eq!(p_light.kind, PointLight);
-        assert_eq!(p_light.pos.x, -1.0);
-        assert_eq!(p_light.intensity.r_val(), 1.0);
-
-        let a_light = parser.parse_light();
-        assert_eq!(a_light.kind, AreaLight);
-        assert_eq!(a_light.pos.x, 0.0);
-        assert_eq!(a_light.dir.x, 200.0);
-        assert_eq!(a_light.intensity.r_val(), 0.0);
-
-        let d_light = parser.parse_light();
-        assert_eq!(d_light.kind, DirectionalLight);
-        assert_eq!(d_light.dir.x, 0.5);
-        assert_eq!(d_light.intensity.r_val(), 0.5);
-    }
-
-    #[test]
-    fn can_parse_material() {
-        let mut parser = scene_parser("material");
-        let material = parser.parse_material();
-        assert_eq!(material.diffuse.r_val(), 0.56);
-        assert_eq!(material.ambient.r_val(), 0.2);
-        assert_eq!(material.shininess, 0.2);
-        assert_eq!(material.transparency, 0.5);
-    }
-
-    #[test]
-    fn can_parse_sphere() {
-        let mut parser = scene_parser("sphere");
-        let sphere = parser.parse_sphere();
-        assert_eq!(sphere.materials.len(), 1);
-        assert_eq!(sphere.origin.y, -0.5);
-        assert_eq!(sphere.radius, 1.5);
-    }
-
-    #[test]
-    fn can_parse_poly() {
-        let mut parser = scene_parser("polygon");
-        let poly = parser.parse_poly(false, false);
-        assert_eq!(poly[0][0], 0.0);
-        assert_eq!(poly[1][0], 0.5);
-        assert_eq!(poly[2][0], 10.0);
-    }
-
-    #[test]
-    fn can_parse_polyset() {
-        let mut parser = scene_parser("polyset");
-        let polyset = parser.parse_polyset();
-        assert_eq!(polyset.len(), 12);
-
-        let ref poly0 = polyset[0];
-        assert_eq!(poly0.vertex_material, false);
-        assert_eq!(poly0.vertex_normal, false);
-        assert_eq!(poly0.materials.len(), 1);
-    }
-
-    #[test]
-    fn can_parse_per_vertex_polyset() {
-        let mut parser = scene_parser("per-vertex-polyset");
-        let polyset = parser.parse_polyset();
-        assert_eq!(polyset.len(), 3);
-
-        let ref poly0 = polyset[0];
-        assert_eq!(poly0.vertex_material, true);
-        assert_eq!(poly0.vertex_normal, true);
-        assert_eq!(poly0.materials.len(), 3);
-        assert_eq!(poly0.materials[0].diffuse, Color::init(0.0, 0.0, 0.0));
-        assert_eq!(poly0[0].mat_index, 0);
-        assert_eq!(poly0.materials[1].diffuse, Color::init(0.0, 0.0, 1.0));
-        assert_eq!(poly0[1].mat_index, 1);
-        assert_eq!(poly0.materials[2].diffuse, Color::init(0.0, 1.0, 0.0));
-        assert_eq!(poly0[2].mat_index, 2);
-
-        let ref poly1 = polyset[1];
-        assert_eq!(poly1.vertex_material, true);
-        assert_eq!(poly1.vertex_normal, true);
-        assert_eq!(poly1.materials.len(), 2);
-        assert_eq!(poly1.materials[0].diffuse, Color::init(0.0, 1.0, 1.0));
-        assert_eq!(poly1[0].mat_index, 0);
-        assert_eq!(poly1[1].mat_index, 0);
-        assert_eq!(poly1.materials[1].diffuse, Color::init(1.0, 0.0, 0.0));
-        assert_eq!(poly1[2].mat_index, 1);
-
-        let ref poly2 = polyset[2];
-        assert_eq!(poly2.vertex_material, true);
-        assert_eq!(poly2.vertex_normal, true);
-        assert_eq!(poly2.materials.len(), 2);
-        assert_eq!(poly2.materials[0].diffuse, Color::init(1.0, 0.0, 1.0));
-        assert_eq!(poly2[0].mat_index, 0);
-        assert_eq!(poly2.materials[1].diffuse, Color::init(1.0, 0.0, 0.0));
-        assert_eq!(poly2[1].mat_index, 1);
-        assert_eq!(poly2[2].mat_index, 0);
-    }
-
-    #[test]
-    fn can_parse_camera() {
-        let mut parser = scene_parser("camera");
-        let camera = parser.parse_camera();
-        assert_eq!(camera.pos[0], 1.0);
-        assert_eq!(camera.view_dir[0], -1.0);
-        assert_eq!(camera.focal_dist, 12.0);
-        assert_eq!(camera.ortho_up[0], 2.0);
-        assert_eq!(camera.vertical_fov, 0.5);
-    }
-
-    #[test]
-    fn can_parse_scene() {
-        let mut parser = scene_parser("scene");
-        let scene = parser.parse_scene();
-        assert_eq!(scene.lights.len(), 3);
-        assert_eq!(scene.shapes.len(), 13);
-    }
-}
+mod test;

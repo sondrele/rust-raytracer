@@ -1,8 +1,8 @@
 use std::cmp;
 
 use ray::Ray;
-use scene::shapes;
-use scene::shapes::{BoundingBox, Shape};
+use scene::shapes::{BoundingBox, Primitive, Shape, ShapeIntersection};
+use self::NodeIntersection::{Hit, Missed};
 
 pub enum Node<'a> {
     Member(Box<TreeNode<'a>>),
@@ -18,15 +18,15 @@ pub enum NodeIntersection<'a> {
 pub struct TreeNode<'a> {
     left: Node<'a>,
     right: Node<'a>,
-    shape: Option<&'a Box<Shape+'a>>,
+    shape: Option<&'a Primitive>,
     bbox: BoundingBox
 }
 
 impl<'a> TreeNode<'a> {
     pub fn new() -> TreeNode<'a> {
         TreeNode {
-            left: Empty,
-            right: Empty,
+            left: Node::Empty,
+            right: Node::Empty,
             shape: None,
             bbox: BoundingBox::new()
         }
@@ -34,9 +34,9 @@ impl<'a> TreeNode<'a> {
 
     fn extract_bbox(node: &Node<'a>) -> BoundingBox {
         match node {
-            &Member(ref n) => n.bbox,
-            &Leaf(ref n) => n.bbox,
-            &Empty => BoundingBox::new()
+            &Node::Member(ref n) => n.bbox,
+            &Node::Leaf(ref n) => n.bbox,
+            &Node::Empty => BoundingBox::new()
         }
     }
 
@@ -51,15 +51,15 @@ impl<'a> TreeNode<'a> {
         node
     }
 
-    fn add(&mut self, shape: &'a Box<Shape+'a>) {
+    fn add(&mut self, shape: &'a Primitive) {
         self.bbox = shape.get_bbox();
         self.shape = Some(shape);
     }
 
-    pub fn get_shape(&self) -> &'a Box<Shape+'a> {
+    pub fn get_shape(&self) -> &'a Primitive {
         match self.shape {
             Some(shape) => shape,
-            None => fail!("Node has not been assigned a shape")
+            None => panic!("Node has not been assigned a shape")
         }
     }
 }
@@ -71,23 +71,23 @@ pub struct Tree<'a> {
 impl<'a> Tree<'a> {
     pub fn new() -> Tree<'a> {
         Tree {
-            root: Empty
+            root: Node::Empty
         }
     }
 
-    pub fn init(&mut self, shapes: &'a mut [Box<Shape+'a>]) {
+    pub fn init(&mut self, shapes: &'a mut [Primitive]) {
         let depth = 0;
         let root = self.build(shapes, depth);
         self.root = root;
     }
 
-    pub fn build(&mut self, shapes: &'a mut [Box<Shape+'a>], depth: uint) -> Node<'a> {
+    pub fn build(&mut self, shapes: &'a mut [Primitive], depth: uint) -> Node<'a> {
         match shapes.len() {
-            0 => Empty,
+            0 => Node::Empty,
             1 => {
                 let mut node = box TreeNode::new();
                 node.add(&shapes[0]);
-                Leaf(node)
+                Node::Leaf(node)
             },
             _ => {
                 let axis = depth as u32 % 3;
@@ -103,26 +103,26 @@ impl<'a> Tree<'a> {
                 let left = self.build(head, depth + 1);
                 let right = self.build(tail, depth + 1);
 
-                Member(box TreeNode::init(left, right))
+                Node::Member(box TreeNode::init(left, right))
             }
         }
     }
 
-    pub fn intersects(&'a self, ray: Ray) -> NodeIntersection<'a> {
+    pub fn intersects(&'a self, ray: &Ray) -> NodeIntersection<'a> {
         Tree::intersects_node(&self.root, ray)
     }
 
-    fn intersects_node(node: &'a Node<'a>, ray: Ray) -> NodeIntersection<'a> {
+    fn intersects_node(node: &'a Node<'a>, ray: &Ray) -> NodeIntersection<'a> {
         match node {
-            &Empty => Missed,
-            &Leaf(ref n) => match n.shape {
+            &Node::Empty => Missed,
+            &Node::Leaf(ref n) => match n.shape {
                 Some(shape) => match shape.intersects(ray) {
-                    shapes::Hit(p) => Hit(n, p),
-                    shapes::Missed => Missed
+                    ShapeIntersection::Hit(p) => Hit(n, p),
+                    ShapeIntersection::Missed => Missed
                 },
                 None => Missed
             },
-            &Member(ref n) => {
+            &Node::Member(ref n) => {
                 let left = Tree::intersects_node(&n.left, ray);
                 let right = Tree::intersects_node(&n.right, ray);
 
@@ -142,11 +142,11 @@ mod tests {
     use vec::Vec3;
     use ray::Ray;
     use scene::{bvh, shapes};
-    use scene::shapes::Shape;
+    use scene::shapes::{Primitive, Shape};
 
-    fn create_shape<'a>() -> Box<Shape+'a> {
+    fn create_shape<'a>() -> Primitive {
         let sphere = shapes::sphere::Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
-        box sphere
+        Primitive::Sphere(sphere)
     }
 
     #[test]
@@ -156,8 +156,8 @@ mod tests {
         tree.init(shapes.as_mut_slice());
 
         match tree.root {
-            bvh::Leaf(n) => assert_eq!(n.bbox.centroid(), Vec3::init(0.0, 0.0, -5.0)),
-            _ => fail!("Tree should have one Leaf-node")
+            bvh::Node::Leaf(n) => assert_eq!(n.bbox.centroid(), Vec3::init(0.0, 0.0, -5.0)),
+            _ => panic!("Tree should have one Leaf-node")
         }
     }
 
@@ -168,12 +168,12 @@ mod tests {
         tree.init(shapes.as_mut_slice());
 
         let intersection = tree.intersects(
-            Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))
+            &Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))
         );
 
         match intersection {
-            bvh::Hit(_, p) => assert_eq!(p, 4.0),
-            _ => fail!("Should have intersected with tree")
+            bvh::NodeIntersection::Hit(_, p) => assert_eq!(p, 4.0),
+            _ => panic!("Should have intersected with tree")
         }
     }
 }

@@ -1,7 +1,7 @@
+use std::num::Float;
 use vec::Vec3;
 use ray::Ray;
-use scene::material::Material;
-use scene::shapes;
+use scene::material::{Material, Color};
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
 #[deriving(Show)]
@@ -51,7 +51,7 @@ impl Shape for Sphere {
         )
     }
 
-    fn intersects(&self, ray: Ray) -> ShapeIntersection {
+    fn intersects(&self, ray: &Ray) -> ShapeIntersection {
         // Transforming ray to object space
         let transformed_origin = ray.ori - self.origin;
 
@@ -68,7 +68,7 @@ impl Shape for Sphere {
         // if discriminant is negative there are no real roots, so return
         // false as ray misses sphere
         if disc < 0.0 {
-            return shapes::Missed;
+            return ShapeIntersection::Missed;
         }
 
         // compute q as described above
@@ -92,13 +92,13 @@ impl Shape for Sphere {
         // if t1 is less than zero, the object is in the ray's negative direction
         // and consequently the ray misses the sphere
         if t1 < 0.0 {
-            return shapes::Missed;
+            return ShapeIntersection::Missed;
         }
 
         // if t0 is less than zero, the intersection point is at t1 else the intersection point is at t0
         match t0 < 0.0 {
-            true => shapes::Hit(t1),
-            false => shapes::Hit(t0)
+            true => ShapeIntersection::Hit(t1),
+            false => ShapeIntersection::Hit(t0)
         }
     }
 
@@ -111,6 +111,10 @@ impl Shape for Sphere {
         normal.normalize();
         normal
     }
+
+    fn diffuse_color(&self, _: Vec3) -> Color {
+        self.get_material().diffuse
+    }
 }
 
 #[cfg(test)]
@@ -118,7 +122,7 @@ mod tests {
     use vec::Vec3;
     use ray::Ray;
     use scene::shapes::sphere::Sphere;
-    use scene::shapes::{Hit, Shape};
+    use scene::shapes::{ShapeIntersection, Shape};
 
     #[test]
     fn can_init_sphere(){
@@ -130,11 +134,11 @@ mod tests {
     fn can_intersect_sphere() {
         let shp = Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
         let ray = Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0));
-        let res = shp.intersects(ray);
+        let res = shp.intersects(&ray);
 
         match res {
-            Hit(point) => assert_eq!(point, 4.0),
-            _ => fail!("Ray did not intersect sphere")
+            ShapeIntersection::Hit(point) => assert_eq!(point, 4.0),
+            _ => panic!("Ray did not intersect sphere")
         }
     }
 }

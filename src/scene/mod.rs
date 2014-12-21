@@ -1,10 +1,13 @@
 use vec::Vec3;
 use ray::Ray;
-use scene::bvh::Tree;
+use scene::bvh::{Node, NodeIntersection, Tree};
 use scene::material::Color;
-use scene::shapes::Shape;
+use scene::shapes::{Shape, ShapeIntersection};
 use scene::intersection::Intersection;
+use self::SceneIntersection::{Intersected, Missed};
 
+
+pub mod parser;
 pub mod material;
 pub mod shapes;
 pub mod intersection;
@@ -13,13 +16,14 @@ pub mod bvh;
 // Is it possible to mplement traits instead of using enums,
 // make the fields private data and call trait methods
 // according to the different types of lights?
-#[deriving(PartialEq, Clone, Show)]
+#[deriving(Copy, PartialEq, Clone, Show)]
 pub enum LightType {
     PointLight,
     AreaLight,
     DirectionalLight
 }
 
+#[deriving(Copy)]
 pub struct Light {
     pub kind: LightType,
     pub pos: Vec3,
@@ -38,6 +42,7 @@ impl Light {
     }
 }
 
+#[deriving(Copy)]
 pub struct Camera {
     pub pos: Vec3,
     pub view_dir: Vec3,
@@ -66,7 +71,7 @@ pub enum SceneIntersection<'a> {
 pub struct Scene<'a> {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub shapes: Vec<Box<Shape+'a>>,
+    pub primitives: Vec<shapes::Primitive>,
     tree: Tree<'a>
 }
 
@@ -75,37 +80,37 @@ impl<'a> Scene<'a> {
         Scene {
             camera: Camera::new(),
             lights: Vec::new(),
-            shapes: Vec::new(),
+            primitives: Vec::new(),
             tree: Tree::new()
         }
     }
 
     pub fn build_tree(&'a mut self) {
-        self.tree.init(self.shapes.as_mut_slice())
+        self.tree.init(self.primitives.as_mut_slice())
     }
 
-    pub fn intersects(&'a self, ray: Ray) -> SceneIntersection<'a> {
+    pub fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {
         match self.tree.root {
-            bvh::Empty => self.iterative_search(ray),
+            Node::Empty => self.iterative_search(ray),
             _ => self.tree_search(ray)
         }
     }
 
-    fn iterative_search(&'a self, ray: Ray) -> SceneIntersection<'a> {
+    fn iterative_search(&'a self, ray: &Ray) -> SceneIntersection<'a> {
         let mut intersection = Missed;
         let mut point: f32 = 0.0;
 
         let mut has_intersected = false;
-        for shape in self.shapes.iter() {
-            match shape.intersects(ray) {
-                shapes::Hit(new_point) if !has_intersected => {
+        for prim in self.primitives.iter() {
+            match prim.intersects(ray) {
+                ShapeIntersection::Hit(new_point) if !has_intersected => {
                     has_intersected = true;
                     point = new_point;
-                    intersection = Intersected(Intersection::new(point, ray, shape));
+                    intersection = Intersected(Intersection::new(point, ray.clone(), prim));
                 },
-                shapes::Hit(new_point) if has_intersected && new_point < point => {
+                ShapeIntersection::Hit(new_point) if has_intersected && new_point < point => {
                     point = new_point;
-                    intersection = Intersected(Intersection::new(point, ray, shape));
+                    intersection = Intersected(Intersection::new(point, ray.clone(), prim));
                 },
                 _ => ()
             }
@@ -113,11 +118,11 @@ impl<'a> Scene<'a> {
         intersection
     }
 
-    fn tree_search(&'a self, ray: Ray) -> SceneIntersection<'a> {
+    fn tree_search(&'a self, ray: &Ray) -> SceneIntersection<'a> {
         let intersection = self.tree.intersects(ray);
         match intersection {
-            bvh::Hit(node, point) => Intersected(Intersection::new(point, ray, node.get_shape())),
-            bvh::Missed => Missed
+            NodeIntersection::Hit(node, point) => Intersected(Intersection::new(point, ray.clone(), node.get_shape())),
+            NodeIntersection::Missed => Missed
         }
     }
 }
@@ -126,16 +131,15 @@ impl<'a> Scene<'a> {
 mod tests {
     use vec::Vec3;
     use ray::Ray;
-    use scene::Scene;
-    use scene::Intersected;
-    use scene::shapes::sphere::Sphere;
+    use scene::{Scene, SceneIntersection};
+    use scene::shapes::{sphere, Primitive};
     use scene::material::{Color, Material};
 
     fn create_scene<'a>() -> Scene<'a> {
-        let mut sphere = Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
+        let mut sphere = sphere::Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
         sphere.materials.insert(0, Material::init(Color::init(1.0, 0.0, 0.0)));
         let mut scene = Scene::new();
-        scene.shapes.push(box sphere);
+        scene.primitives.push(Primitive::Sphere(sphere));
         scene
     }
 
@@ -143,19 +147,19 @@ mod tests {
     fn can_init_scene() {
         let scene = Scene::new();
         assert!(scene.lights.len() == 0);
-        assert!(scene.shapes.len() == 0);
+        assert!(scene.primitives.len() == 0);
     }
 
     #[test]
     fn can_intersect_scene() {
         let scene = create_scene();
 
-        match scene.intersects(Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))) {
-            Intersected(intersection) => {
+        match scene.intersects(&Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))) {
+            SceneIntersection::Intersected(intersection) => {
                 let color = intersection.color();
                 assert_eq!(Color::init(1.0, 0.0, 0.0), color)
             },
-            _ => fail!("Ray did not intersect scene")
+            _ => panic!("Ray did not intersect scene")
         }
     }
 }

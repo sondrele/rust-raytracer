@@ -1,6 +1,7 @@
 use std::cmp;
+use std::num::Float;
 
-#[deriving(Show)]
+#[deriving(Clone, Copy, Show)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
@@ -37,19 +38,19 @@ impl PartialOrd for Vec3 {
 }
 
 impl Add<Vec3, Vec3> for Vec3 {
-    fn add(&self, vec: &Vec3) -> Vec3 {
+    fn add(self, vec: Vec3) -> Vec3 {
         Vec3::init(self.x + vec.x, self.y + vec.y, self.z + vec.z)
     }
 }
 
 impl Sub<Vec3, Vec3> for Vec3 {
-    fn sub(&self, vec: &Vec3) -> Vec3 {
+    fn sub(self, vec: Vec3) -> Vec3 {
         Vec3::init(self.x - vec.x, self.y - vec.y, self.z - vec.z)
     }
 }
 
 impl Mul<Vec3, Vec3> for Vec3 {
-    fn mul(&self, vec: &Vec3) -> Vec3 {
+    fn mul(self, vec: Vec3) -> Vec3 {
         Vec3::init(self.x * vec.x, self.y * vec.y, self.z * vec.z)
     }
 }
@@ -60,7 +61,7 @@ impl Index<u32, f32> for Vec3 {
             &0 => &self.x,
             &1 => &self.y,
             &2 => &self.z,
-            _ => fail!("Index out of bounds: {}", index)
+            _ => panic!("Index out of bounds: {}", index)
         }
     }
 }
