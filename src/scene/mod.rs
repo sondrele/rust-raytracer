@@ -133,7 +133,7 @@ mod tests {
     fn can_intersect_scene() {
         let scene = create_scene();
 
-        match scene.intersects(Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))) {
+        match scene.intersects(&Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))) {
             SceneIntersection::Intersected(intersection) => {
                 let color = intersection.color();
                 assert_eq!(Color::init(1.0, 0.0, 0.0), color)

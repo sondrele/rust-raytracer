@@ -134,7 +134,7 @@ mod tests {
     fn can_intersect_sphere() {
         let shp = Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
         let ray = Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0));
-        let res = shp.intersects(ray);
+        let res = shp.intersects(&ray);
 
         match res {
             ShapeIntersection::Hit(point) => assert_eq!(point, 4.0),

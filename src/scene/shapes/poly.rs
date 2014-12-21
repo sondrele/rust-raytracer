@@ -232,7 +232,7 @@ mod tests {
         poly.vertices[2].position = Vec3::init(0.0, 2.0, -1.0);
         let ray = Ray::init(Vec3::init(0.0, SIN_PI_4, 0.0), Vec3::init(0.0, 0.0, -1.0));
 
-        match poly.intersects(ray) {
+        match poly.intersects(&ray) {
             ShapeIntersection::Hit(point) => assert_approx_eq(point, 2.292893),
             _ => panic!("Ray should have intersected at {}", 2.292893 as f32)
         }

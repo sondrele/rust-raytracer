@@ -151,6 +151,6 @@ mod tests {
         let bbox = s.get_bbox();
         let ray = Ray::init(Vec3::init(0.0, 0.0, -2.0), Vec3::init(0.0, 0.0, -1.0));
 
-        assert!(bbox.intersects(ray));
+        assert!(bbox.intersects(&ray));
     }
 }
