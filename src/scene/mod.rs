@@ -71,8 +71,7 @@ pub enum SceneIntersection<'a> {
 pub struct Scene<'a> {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub primitives: Vec<shapes::Primitive>,
-    tree: Tree<'a>
+    pub primitives: Vec<shapes::Primitive>
 }
 
 impl<'a> Scene<'a> {
@@ -80,23 +79,11 @@ impl<'a> Scene<'a> {
         Scene {
             camera: Camera::new(),
             lights: Vec::new(),
-            primitives: Vec::new(),
-            tree: Tree::new()
+            primitives: Vec::new()
         }
-    }
-
-    pub fn build_tree(&'a mut self) {
-        self.tree.init(self.primitives.as_mut_slice())
     }
 
     pub fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {
-        match self.tree.root {
-            Node::Empty => self.iterative_search(ray),
-            _ => self.tree_search(ray)
-        }
-    }
-
-    fn iterative_search(&'a self, ray: &Ray) -> SceneIntersection<'a> {
         let mut intersection = Missed;
         let mut point: f32 = 0.0;
 
@@ -117,15 +104,42 @@ impl<'a> Scene<'a> {
         }
         intersection
     }
+}
 
-    fn tree_search(&'a self, ray: &Ray) -> SceneIntersection<'a> {
+
+pub struct BvhScene<'a> {
+    pub camera: Camera,
+    pub lights: Vec<Light>,
+    pub tree: Tree<'a>
+}
+
+impl<'a> BvhScene<'a> {
+    pub fn new() -> BvhScene<'a> {
+        BvhScene {
+            camera: Camera::new(),
+            lights: Vec::new(),
+            tree: Tree::new()
+        }
+    }
+
+    pub fn from_scene(scene: Scene<'a>) -> BvhScene<'a> {
+        let mut bvh_scene = BvhScene::new();
+        bvh_scene.camera = scene.camera;
+        bvh_scene.lights = scene.lights;
+        bvh_scene.tree.init(scene.primitives);
+        bvh_scene
+    }
+
+    fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {
         let intersection = self.tree.intersects(ray);
         match intersection {
-            NodeIntersection::Hit(node, point) => Intersected(Intersection::new(point, ray.clone(), node.get_shape())),
+            NodeIntersection::Hit(node, point) =>
+                Intersected(Intersection::new(point, ray.clone(), node.get_shape())),
             NodeIntersection::Missed => Missed
         }
     }
 }
+
 
 #[cfg(test)]
 mod tests {

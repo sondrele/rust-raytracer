@@ -44,7 +44,7 @@ impl Index<u32, f32> for Vertex {
     }
 }
 
-#[deriving(Show)]
+#[deriving(Clone, Show)]
 pub struct Poly {
     pub materials: Vec<Material>,
     pub vertices: [Vertex, ..3],

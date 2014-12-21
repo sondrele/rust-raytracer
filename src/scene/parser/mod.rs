@@ -3,7 +3,7 @@ use std::io::{BufferedReader, File};
 use std::str::FromStr;
 
 use vec::Vec3;
-use scene::{Scene, Camera, Light};
+use scene::{BvhScene, Scene, Camera, Light};
 use scene::LightType::{DirectionalLight, PointLight, AreaLight};
 use scene::material::{Material, Color};
 use scene::shapes::{sphere, poly};
@@ -353,8 +353,12 @@ impl SceneParser {
             }
             tkn = self.peak();
         }
-        // scene.build_tree();
         scene
+    }
+
+    pub fn parse_bvh_scene<'a>(&mut self) -> BvhScene<'a> {
+        let scene = self.parse_scene();
+        BvhScene::from_scene(scene)
     }
 }
 

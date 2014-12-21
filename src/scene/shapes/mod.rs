@@ -131,6 +131,7 @@ pub trait Shape {
     fn diffuse_color(&self, point: Vec3) -> Color;
 }
 
+#[deriving(Clone)]
 pub enum Primitive {
     Poly(poly::Poly),
     Sphere(sphere::Sphere)

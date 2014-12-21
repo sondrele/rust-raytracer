@@ -18,7 +18,7 @@ pub enum NodeIntersection<'a> {
 pub struct TreeNode<'a> {
     left: Node<'a>,
     right: Node<'a>,
-    shape: Option<&'a Primitive>,
+    shape: Option<Primitive>,
     bbox: BoundingBox
 }
 
@@ -32,7 +32,7 @@ impl<'a> TreeNode<'a> {
         }
     }
 
-    fn extract_bbox(node: &Node<'a>) -> BoundingBox {
+    fn get_bbox(node: &Node<'a>) -> BoundingBox {
         match node {
             &Node::Member(ref n) => n.bbox,
             &Node::Leaf(ref n) => n.bbox,
@@ -41,8 +41,8 @@ impl<'a> TreeNode<'a> {
     }
 
     pub fn init(left: Node<'a>, right: Node<'a>) -> TreeNode<'a> {
-        let left_bbox = TreeNode::extract_bbox(&left);
-        let right_bbox = TreeNode::extract_bbox(&right);
+        let left_bbox = TreeNode::get_bbox(&left);
+        let right_bbox = TreeNode::get_bbox(&right);
 
         let mut node = TreeNode::new();
         node.left = left;
@@ -51,14 +51,14 @@ impl<'a> TreeNode<'a> {
         node
     }
 
-    fn add(&mut self, shape: &'a Primitive) {
+    fn add(&mut self, shape: Primitive) {
         self.bbox = shape.get_bbox();
         self.shape = Some(shape);
     }
 
-    pub fn get_shape(&self) -> &'a Primitive {
+    pub fn get_shape(&'a self) -> &'a Primitive {
         match self.shape {
-            Some(shape) => shape,
+            Some(ref shape) => shape,
             None => panic!("Node has not been assigned a shape")
         }
     }
@@ -75,18 +75,18 @@ impl<'a> Tree<'a> {
         }
     }
 
-    pub fn init(&mut self, shapes: &'a mut [Primitive]) {
+    pub fn init(&mut self, mut shapes: Vec<Primitive>) {
         let depth = 0;
-        let root = self.build(shapes, depth);
+        let root = self.build(shapes.as_mut_slice(), depth);
         self.root = root;
     }
 
-    pub fn build(&mut self, shapes: &'a mut [Primitive], depth: uint) -> Node<'a> {
+    fn build(&mut self, shapes: &'a mut [Primitive], depth: uint) -> Node<'a> {
         match shapes.len() {
             0 => Node::Empty,
             1 => {
                 let mut node = box TreeNode::new();
-                node.add(&shapes[0]);
+                node.add(shapes[0].clone());
                 Node::Leaf(node)
             },
             _ => {
@@ -116,7 +116,7 @@ impl<'a> Tree<'a> {
         match node {
             &Node::Empty => Missed,
             &Node::Leaf(ref n) => match n.shape {
-                Some(shape) => match shape.intersects(ray) {
+                Some(ref shape) => match shape.intersects(ray) {
                     ShapeIntersection::Hit(p) => Hit(n, p),
                     ShapeIntersection::Missed => Missed
                 },
@@ -151,9 +151,9 @@ mod tests {
 
     #[test]
     fn can_init_tree_of_size_1() {
-        let mut shapes= vec!(create_shape());
+        let mut shapes = vec!(create_shape());
         let mut tree = bvh::Tree::new();
-        tree.init(shapes.as_mut_slice());
+        tree.init(shapes);
 
         match tree.root {
             bvh::Node::Leaf(n) => assert_eq!(n.bbox.centroid(), Vec3::init(0.0, 0.0, -5.0)),
@@ -165,7 +165,7 @@ mod tests {
     fn can_intersect_tree_of_size_1() {
         let mut shapes= vec!(create_shape());
         let mut tree = bvh::Tree::new();
-        tree.init(shapes.as_mut_slice());
+        tree.init(shapes);
 
         let intersection = tree.intersects(
             &Ray::init(Vec3::init(0.0, 0.0, 0.0), Vec3::init(0.0, 0.0, -1.0))
