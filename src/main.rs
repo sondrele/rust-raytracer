@@ -61,7 +61,7 @@ fn main() {
     let out = get_str(&matches, "o", "img") + ".bmp";
 
     let mut parser = SceneParser::new(scene);
-    let scene = parser.parse_scene();
+    let scene = box parser.parse_scene();
     let mut tracer = RayTracer::init(size, size, depth);
     tracer.set_scene(scene);
     let img = tracer.trace_rays();

@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn can_init_tree_of_size_1() {
-        let mut shapes = vec!(create_shape());
+        let shapes = vec!(create_shape());
         let mut tree = bvh::Tree::new();
         tree.init(shapes);
 
@@ -163,7 +163,7 @@ mod tests {
 
     #[test]
     fn can_intersect_tree_of_size_1() {
-        let mut shapes= vec!(create_shape());
+        let shapes = vec!(create_shape());
         let mut tree = bvh::Tree::new();
         tree.init(shapes);
 

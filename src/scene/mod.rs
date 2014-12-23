@@ -1,11 +1,10 @@
 use vec::Vec3;
 use ray::Ray;
-use scene::bvh::{Node, NodeIntersection, Tree};
+use scene::bvh::{NodeIntersection, Tree};
 use scene::material::Color;
 use scene::shapes::{Shape, ShapeIntersection};
 use scene::intersection::Intersection;
 use self::SceneIntersection::{Intersected, Missed};
-
 
 pub mod parser;
 pub mod material;
@@ -68,6 +67,14 @@ pub enum SceneIntersection<'a> {
     Missed
 }
 
+pub trait IntersectableScene<'a> {
+    fn get_camera(&self) -> &Camera;
+
+    fn get_lights(&self) -> &[Light];
+
+    fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a>;
+}
+
 pub struct Scene<'a> {
     pub camera: Camera,
     pub lights: Vec<Light>,
@@ -82,8 +89,18 @@ impl<'a> Scene<'a> {
             primitives: Vec::new()
         }
     }
+}
 
-    pub fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {
+impl<'a> IntersectableScene<'a> for Scene<'a> {
+    fn get_camera(&self) -> &Camera {
+        &self.camera
+    }
+
+    fn get_lights(&self) -> &[Light] {
+        self.lights.as_slice()
+    }
+
+    fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {
         let mut intersection = Missed;
         let mut point: f32 = 0.0;
 
@@ -105,7 +122,6 @@ impl<'a> Scene<'a> {
         intersection
     }
 }
-
 
 pub struct BvhScene<'a> {
     pub camera: Camera,
@@ -129,6 +145,16 @@ impl<'a> BvhScene<'a> {
         bvh_scene.tree.init(scene.primitives);
         bvh_scene
     }
+}
+
+impl<'a> IntersectableScene<'a> for BvhScene<'a> {
+    fn get_camera(&self) -> &Camera {
+        &self.camera
+    }
+
+    fn get_lights(&self) -> &[Light] {
+        self.lights.as_slice()
+    }
 
     fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {
         let intersection = self.tree.intersects(ray);
@@ -140,12 +166,11 @@ impl<'a> BvhScene<'a> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use vec::Vec3;
     use ray::Ray;
-    use scene::{Scene, SceneIntersection};
+    use scene::{IntersectableScene, Scene, SceneIntersection};
     use scene::shapes::{sphere, Primitive};
     use scene::material::{Color, Material};
 

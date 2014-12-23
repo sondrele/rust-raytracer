@@ -7,7 +7,7 @@ use bmp::Image;
 
 use vec::Vec3;
 use ray::Ray;
-use scene::{Scene, Light};
+use scene::{IntersectableScene, Light};
 use scene::LightType::{DirectionalLight, PointLight, AreaLight};
 use scene::SceneIntersection::{Intersected, Missed};
 use scene::material::Color;
@@ -29,7 +29,7 @@ pub struct RayTracer<'a> {
     parallel_right: Vec3,
     vertical_fov: f32,
     horizontal_fov: f32,
-    scene: Option<Scene<'a>>
+    scene: Option<Box<IntersectableScene<'a> + 'a>>
 }
 
 impl<'a> RayTracer<'a> {
@@ -56,14 +56,14 @@ impl<'a> RayTracer<'a> {
         raytracer
     }
 
-    pub fn set_scene(&mut self, scene: Scene<'a>) {
+    pub fn set_scene(&mut self, scene: Box<IntersectableScene<'a> + 'a>) {
         self.scene = Some(scene);
         self.setup_camera();
     }
 
     fn setup_camera(&mut self) {
         let cam = match self.scene {
-            Some(ref scene) => scene.camera,
+            Some(ref scene) => scene.get_camera(),
             None => panic!("RayTracer has not been assigned any Scene")
         };
 
@@ -97,7 +97,7 @@ impl<'a> RayTracer<'a> {
         Ray::init(self.camera_pos, dir)
     }
 
-    fn shadow_scalar<'b>(scene: &Scene<'a>, light: &Light, intersection: &Intersection, depth: uint) -> Color {
+    fn shadow_scalar<'b>(scene: &'a Box<IntersectableScene<'a> + 'a>, light: &Light, intersection: &Intersection, depth: uint) -> Color {
         if depth <= 0 {
             return Color::new();
         }
@@ -199,7 +199,7 @@ impl<'a> RayTracer<'a> {
         direct_light * (diffuse_light + specular_light)
     }
 
-    fn shade_intersection<'b>(scene: &Scene<'a>, intersection: &Intersection, depth: uint) -> Color {
+    fn shade_intersection<'b>(scene: &'a Box<IntersectableScene<'a> + 'a>, intersection: &Intersection, depth: uint) -> Color {
         if depth <= 0 {
             return Color::new();
         }
@@ -213,7 +213,7 @@ impl<'a> RayTracer<'a> {
         let ambient_light: Color = RayTracer::ambient_lightning(kt, ka, cd);
 
         let mut direct_light: Color = Color::new();
-        for light in scene.lights.iter() {
+        for light in scene.get_lights().iter() {
             let fattj = RayTracer::calculate_fattj(light, intersection.point());
             if fattj > 0.0 {
                 let shadow_scalar = RayTracer::shadow_scalar(scene, light, intersection, depth);
@@ -248,7 +248,7 @@ impl<'a> RayTracer<'a> {
         direct_light + ambient_light + reflective_light + refractive_light
     }
 
-    pub fn trace_rays(&self) -> Image {
+    pub fn trace_rays(&'a self) -> Image {
         match self.scene {
             Some(ref scene) => {
                 let mut img = Image::new(self.width, self.height);
@@ -281,7 +281,7 @@ mod tests {
     use scene::{Scene, Camera};
 
     fn get_raytraer<'a>() -> RayTracer<'a> {
-        let mut scene = Scene::new();
+        let mut scene = box Scene::new();
         scene.camera = Camera::new();
         scene.camera.view_dir = Vec3::init(0.0, 0.0, -1.0);
         scene.camera.ortho_up = Vec3::init(0.0, 1.0, 0.0);
