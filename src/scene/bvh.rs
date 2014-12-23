@@ -145,6 +145,9 @@ impl<'a> Tree<'a> {
 
 #[cfg(test)]
 mod tests {
+    extern crate test;
+    use self::test::Bencher;
+
     use vec::Vec3;
     use ray::Ray;
     use scene::{bvh, shapes};
@@ -263,5 +266,21 @@ mod tests {
             &Ray::init(Vec3::init(-1.0, -1.0, 1.0), Vec3::init(0.0, 0.0, 1.0))
         );
         assert_eq!(intersection, bvh::NodeIntersection::Missed);
+    }
+
+    #[bench]
+    fn name(b: &mut Bencher) {
+        let shapes = vec!(
+            create_shape(Vec3::init(0.0, 0.0, 0.0)),
+            create_shape(Vec3::init(-1.0, 2.0, 1.0)),
+            create_shape(Vec3::init(-2.0, -2.0, 2.0)),
+            create_shape(Vec3::init(2.0, 2.0, -1.0))
+        );
+
+        let mut tree = bvh::Tree::new();
+        tree.init(shapes);
+
+        let ray = Ray::init(Vec3::init(2.0, 2.0, 2.0), Vec3::init(0.0, 0.0, -1.0));
+        b.iter(|| tree.intersects(&ray))
     }
 }
