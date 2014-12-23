@@ -5,7 +5,7 @@ use ray::Ray;
 use scene::material::{Material, Color};
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
-#[deriving(Copy, Show)]
+#[deriving(Copy, PartialEq, Show)]
 pub struct Vertex {
     pub mat_index: u32,
     pub has_normal: bool,
@@ -44,7 +44,7 @@ impl Index<u32, f32> for Vertex {
     }
 }
 
-#[deriving(Clone, Show)]
+#[deriving(Clone, PartialEq, Show)]
 pub struct Poly {
     pub materials: Vec<Material>,
     pub vertices: [Vertex, ..3],

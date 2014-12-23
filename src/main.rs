@@ -6,6 +6,7 @@ use std::str::FromStr;
 use getopts::{Matches, optopt, optflag, getopts, OptGroup};
 
 use rstracer::scene::parser::SceneParser;
+use rstracer::scene::IntersectableScene;
 use rstracer::RayTracer;
 
 fn parse_command_line(program: &str, args: &[String], opts: &[OptGroup]) -> Matches {
@@ -44,6 +45,7 @@ fn main() {
     let program = args[0].as_slice();
     let opts = [
         optflag("h", "help", "Print this help menu"),
+        optflag("b", "bvh", "Optimize scene intersection with BVH-tree"),
         optopt("s", "size", "The width and height of the image to be generated", "-s 500"),
         optopt("d", "depth", "The depth of the recursion in the main loop", "-d 10"),
         optopt("i", "scene", "The name of a scene located in the ./scenes directory", "-i test01"),
@@ -61,7 +63,11 @@ fn main() {
     let out = get_str(&matches, "o", "img") + ".bmp";
 
     let mut parser = SceneParser::new(scene);
-    let scene = box parser.parse_scene();
+    let scene: Box<IntersectableScene> = if matches.opt_present("b") {
+        box parser.parse_bvh_scene()
+    } else {
+        box parser.parse_scene()
+    };
     let mut tracer = RayTracer::init(size, size, depth);
     tracer.set_scene(scene);
     let img = tracer.trace_rays();

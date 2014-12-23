@@ -4,17 +4,21 @@ use ray::Ray;
 use scene::shapes::{BoundingBox, Primitive, Shape, ShapeIntersection};
 use self::NodeIntersection::{Hit, Missed};
 
+
+#[deriving(PartialEq, Show)]
 pub enum Node<'a> {
     Member(Box<TreeNode<'a>>),
     Leaf(Box<TreeNode<'a>>),
     Empty
 }
 
+#[deriving(PartialEq, Show)]
 pub enum NodeIntersection<'a> {
     Hit(&'a Box<TreeNode<'a>>, f32),
     Missed
 }
 
+#[deriving(PartialEq, Show)]
 pub struct TreeNode<'a> {
     left: Node<'a>,
     right: Node<'a>,
@@ -115,23 +119,25 @@ impl<'a> Tree<'a> {
     fn intersects_node(node: &'a Node<'a>, ray: &Ray) -> NodeIntersection<'a> {
         match node {
             &Node::Empty => Missed,
-            &Node::Leaf(ref n) => match n.shape {
+            &Node::Leaf(ref node) => match node.shape {
                 Some(ref shape) => match shape.intersects(ray) {
-                    ShapeIntersection::Hit(p) => Hit(n, p),
+                    ShapeIntersection::Hit(p) => Hit(node, p),
                     ShapeIntersection::Missed => Missed
                 },
                 None => Missed
             },
-            &Node::Member(ref n) => {
-                let left = Tree::intersects_node(&n.left, ray);
-                let right = Tree::intersects_node(&n.right, ray);
+            &Node::Member(ref node) => if node.bbox.intersects(ray) {
+                let left = Tree::intersects_node(&node.left, ray);
+                let right = Tree::intersects_node(&node.right, ray);
 
                 match (left, right) {
                     (Hit(n0, p0), Hit(n1, p1)) => if p0 < p1 { Hit(n0, p0) } else { Hit(n1, p1) },
-                    (Hit(n, p), _) => Hit(n, p),
-                    (_, Hit(n, p)) => Hit(n, p),
+                    (Hit(node, p), _) => Hit(node, p),
+                    (_, Hit(node, p)) => Hit(node, p),
                     (_, _) => Missed
                 }
+            } else {
+                Missed
             }
         }
     }
@@ -144,14 +150,14 @@ mod tests {
     use scene::{bvh, shapes};
     use scene::shapes::{Primitive, Shape};
 
-    fn create_shape<'a>() -> Primitive {
-        let sphere = shapes::sphere::Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
+    fn create_shape<'a>(pos: Vec3) -> Primitive {
+        let sphere = shapes::sphere::Sphere::init(pos, 1.0);
         Primitive::Sphere(sphere)
     }
 
     #[test]
     fn can_init_tree_of_size_1() {
-        let shapes = vec!(create_shape());
+        let shapes = vec!(create_shape(Vec3::init(0.0, 0.0, -5.0)));
         let mut tree = bvh::Tree::new();
         tree.init(shapes);
 
@@ -163,7 +169,7 @@ mod tests {
 
     #[test]
     fn can_intersect_tree_of_size_1() {
-        let shapes = vec!(create_shape());
+        let shapes = vec!(create_shape(Vec3::init(0.0, 0.0, -5.0)));
         let mut tree = bvh::Tree::new();
         tree.init(shapes);
 
@@ -175,5 +181,87 @@ mod tests {
             bvh::NodeIntersection::Hit(_, p) => assert_eq!(p, 4.0),
             _ => panic!("Should have intersected with tree")
         }
+    }
+
+    #[test]
+    fn can_build_tree_of_size_4() {
+        let shapes = vec!(
+            create_shape(Vec3::init(0.0, 0.0, 0.0)),
+            create_shape(Vec3::init(-1.0, 2.0, 1.0)),
+            create_shape(Vec3::init(-2.0, -2.0, 2.0)),
+            create_shape(Vec3::init(2.0, 2.0, -1.0))
+        );
+
+        let mut tree = bvh::Tree::new();
+        tree.init(shapes);
+
+        let get_members = |root| match root {
+            &bvh::Node::Member(ref node) => (node.bbox, &node.left, &node.right),
+            _ => panic!("Node shuold be a member")
+        };
+
+        let (bbox, left, right) = get_members(&tree.root);
+        assert_eq!(shapes::BoundingBox::init(
+            Vec3::init(-3.0, -3.0, -2.0), Vec3::init(3.0, 3.0, 3.0)), bbox);
+
+        let (bbox, ll, lr) = get_members(left);
+        assert_eq!(shapes::BoundingBox::init(
+            Vec3::init(-3.0, -3.0, 0.0), Vec3::init(0.0, 3.0, 3.0)), bbox);
+
+        let (bbox, rl, rr) = get_members(right);
+        assert_eq!(shapes::BoundingBox::init(
+            Vec3::init(-1.0, -1.0, -2.0), Vec3::init(3.0, 3.0, 1.0)), bbox);
+
+        let assert_leafnode = |sphere_node, primitive: Primitive| match sphere_node {
+            &bvh::Node::Leaf(ref node) => {
+                match node.shape {
+                    Some(ref prim) => assert_eq!(&primitive, prim),
+                    _ => panic!("Primitive is sphere")
+                }
+            },
+            _ => panic!("Node should be a Leaf")
+
+        };
+
+        assert_leafnode(ll, create_shape(Vec3::init(-2.0, -2.0, 2.0)));
+        assert_leafnode(lr, create_shape(Vec3::init(-1.0, 2.0, 1.0)));
+        assert_leafnode(rl, create_shape(Vec3::init(0.0, 0.0, 0.0)));
+        assert_leafnode(rr, create_shape(Vec3::init(2.0, 2.0, -1.0)));
+    }
+
+    #[test]
+    fn can_intersect_tree_of_size_4() {
+        let shapes = vec!(
+            create_shape(Vec3::init(0.0, 0.0, 0.0)),
+            create_shape(Vec3::init(-1.0, 2.0, 1.0)),
+            create_shape(Vec3::init(-2.0, -2.0, 2.0)),
+            create_shape(Vec3::init(2.0, 2.0, -1.0))
+        );
+
+        let mut tree = bvh::Tree::new();
+        tree.init(shapes);
+
+        let intersect_tree = |ray, primitive: Primitive| match tree.intersects(&ray) {
+            bvh::NodeIntersection::Hit(node, _) => {
+                match node.shape {
+                    Some(ref prim) => assert_eq!(&primitive, prim),
+                    _ => panic!("Node should have primitive")
+                }
+            },
+            _ => panic!("Ray should have intersected tree")
+        };
+
+        intersect_tree(
+            Ray::init(Vec3::init(2.0, 2.0, 2.0), Vec3::init(0.0, 0.0, -1.0)),
+            create_shape(Vec3::init(2.0, 2.0, -1.0))
+        );
+        intersect_tree(
+            Ray::init(Vec3::init(-1.0, -1.0, 1.0), Vec3::init(-1.0, -1.0, 1.0)),
+            create_shape(Vec3::init(-2.0, -2.0, 2.0))
+        );
+        let intersection = tree.intersects(
+            &Ray::init(Vec3::init(-1.0, -1.0, 1.0), Vec3::init(0.0, 0.0, 1.0))
+        );
+        assert_eq!(intersection, bvh::NodeIntersection::Missed);
     }
 }

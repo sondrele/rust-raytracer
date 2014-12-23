@@ -15,7 +15,7 @@ pub enum ShapeIntersection<'a> {
     Missed
 }
 
-#[deriving(Copy)]
+#[deriving(Copy, PartialEq, Show)]
 pub struct BoundingBox {
     min: Vec3,
     max: Vec3
@@ -100,12 +100,6 @@ impl Add<BoundingBox, BoundingBox> for BoundingBox {
     }
 }
 
-impl PartialEq for BoundingBox {
-    fn eq(&self, bbox: &BoundingBox) -> bool {
-        self.min == bbox.min && self.max == bbox.max
-    }
-}
-
 impl PartialOrd for BoundingBox {
     fn partial_cmp(&self, other: &BoundingBox) -> Option<cmp::Ordering> {
         match self < other {
@@ -131,7 +125,7 @@ pub trait Shape {
     fn diffuse_color(&self, point: Vec3) -> Color;
 }
 
-#[deriving(Clone)]
+#[deriving(Clone, PartialEq, Show)]
 pub enum Primitive {
     Poly(poly::Poly),
     Sphere(sphere::Sphere)
