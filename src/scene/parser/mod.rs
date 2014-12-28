@@ -83,7 +83,7 @@ impl SceneParser {
 
     fn next_num<T:FromStr>(&mut self) -> T {
         let tkn = self.next_token();
-        match from_str::<T>(tkn.as_slice()) {
+        match tkn.as_slice().parse() {
             Some(f) => f,
             None => panic!("Token '{}'", tkn)
         }

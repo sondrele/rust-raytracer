@@ -1,4 +1,4 @@
-use std::cmp;
+use std::cmp::Ordering;
 use std::num::Float;
 
 #[deriving(Clone, Copy, Show)]
@@ -15,10 +15,10 @@ impl PartialEq for Vec3 {
 }
 
 impl PartialOrd for Vec3 {
-    fn partial_cmp(&self, other: &Vec3) -> Option<cmp::Ordering> {
+    fn partial_cmp(&self, other: &Vec3) -> Option<Ordering> {
         match self < other {
-            true => Some(cmp::Less),
-            false => Some(cmp::Greater)
+            true => Some(Ordering::Less),
+            false => Some(Ordering::Greater)
         }
     }
 

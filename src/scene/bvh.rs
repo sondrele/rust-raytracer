@@ -1,4 +1,4 @@
-use std::cmp;
+use std::cmp::Ordering;
 
 use ray::Ray;
 use scene::shapes::{BoundingBox, Primitive, Shape, ShapeIntersection};
@@ -97,8 +97,8 @@ impl<'a> Tree<'a> {
                 let axis = depth as u32 % 3;
                 shapes.sort_by(|a, b| {
                     match a.get_bbox().centroid()[axis] < b.get_bbox().centroid()[axis] {
-                        true => cmp::Less,
-                        false => cmp::Greater
+                        true => Ordering::Less,
+                        false => Ordering::Greater
                     }
                 });
                 let half = shapes.len() / 2;

@@ -8,3 +8,4 @@ rust-raytracer.sublime-workspace
 target
 
 *.racertmp
+src/**/tmp*

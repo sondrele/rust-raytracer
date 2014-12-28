@@ -21,7 +21,7 @@ fn parse_command_line(program: &str, args: &[String], opts: &[OptGroup]) -> Matc
 
 fn get_opt<T:FromStr>(matches: &Matches, opt: &str, default: T) -> T {
     match matches.opt_str(opt) {
-        Some(opt_str) => from_str::<T>(opt_str.as_slice()).unwrap_or(default),
+        Some(opt_str) => opt_str.as_slice().parse().unwrap_or(default),
         None => default
     }
 }

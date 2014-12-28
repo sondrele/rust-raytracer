@@ -1,5 +1,5 @@
 use std::mem::swap;
-use std::cmp;
+use std::cmp::Ordering;
 use std::num::FloatMath;
 
 use vec::Vec3;
@@ -101,10 +101,10 @@ impl Add<BoundingBox, BoundingBox> for BoundingBox {
 }
 
 impl PartialOrd for BoundingBox {
-    fn partial_cmp(&self, other: &BoundingBox) -> Option<cmp::Ordering> {
+    fn partial_cmp(&self, other: &BoundingBox) -> Option<Ordering> {
         match self < other {
-            true => Some(cmp::Less),
-            false => Some(cmp::Greater)
+            true => Some(Ordering::Less),
+            false => Some(Ordering::Greater)
         }
     }
 
