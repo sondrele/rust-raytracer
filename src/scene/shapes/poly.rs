@@ -123,8 +123,8 @@ impl Shape for Poly {
 
         let max = Vec3::init(
             self[0][0].max(self[1][0].max(self[2][0])),
-            self[0][0].max(self[1][0].max(self[2][0])),
-            self[0][0].max(self[1][0].max(self[2][0]))
+            self[0][1].max(self[1][1].max(self[2][1])),
+            self[0][2].max(self[1][2].max(self[2][2]))
         );
 
         BoundingBox::init(min, max)
