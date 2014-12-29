@@ -103,39 +103,56 @@ impl<'a> RayTracer<'a> {
         }
 
         let dest: Vec3 = light.pos;
-        let (ori, dir) = match light.kind {
+        let (ori, dirs) = match light.kind {
             DirectionalLight => {
                 let dir = light.dir.invert();
                 let ori = intersection.point() + dir.mult(0.0001);
-                (ori, dir)
+                (ori, vec!(dir))
             },
             PointLight => {
                 let mut ori = intersection.point();
                 let mut dir = dest - ori;
                 dir.normalize();
                 ori = ori + dir.mult(0.0001);
-                (ori, dir)
+                (ori, vec!(dir))
             },
-            AreaLight => return Color::new()
+            AreaLight => {
+                // let ori = intersection.point() + dir.mult(0.0001);
+                // let dirs = Vec::from_fn(10, || {
+                //     let
+                // })
+
+                let mut ori = intersection.point();
+                let mut dir = dest - ori;
+                dir.normalize();
+                ori = ori + dir.mult(0.0001);
+                (ori, vec!(dir))
+            }
         };
 
-        let shadow = Ray::init(ori, dir);
-        match scene.intersects(&shadow) {
-            Intersected(intersection) => {
-                let material = intersection.material();
-                if material.transparency == 0.0 {
-                    match light.kind {
-                        PointLight if ori.distance(intersection.point()) > ori.distance(dest) =>
-                            Color::init(1.0, 1.0, 1.0), // Intersects with object behind light source
-                        _ => Color::new() // Hit something before directional light, ignoring area light
+        let mut shade = Color::new();
+
+        for &dir in dirs.iter() {
+            let shadow = Ray::init(ori, dir);
+            shade = shade + match scene.intersects(&shadow) {
+                Intersected(intersection) => {
+                    let material = intersection.material();
+                    if material.transparency == 0.0 {
+                        match light.kind {
+                            PointLight if ori.distance(intersection.point()) > ori.distance(dest) =>
+                                Color::init(1.0, 1.0, 1.0), // Intersects with object behind light source
+                            _ => Color::new() // Hit something before directional light, ignoring area light
+                        }
+                    } else { // Shape is transparent, continue recursively
+                        let shade = intersection.color().mult(material.transparency);
+                        shade * RayTracer::shadow_scalar(scene, light, &intersection, depth - 1)
                     }
-                } else { // Shape is transparent, continue recursively
-                    let shade = intersection.color().mult(material.transparency);
-                    shade * RayTracer::shadow_scalar(scene, light, &intersection, depth - 1)
-                }
-            },
-            Missed => Color::init(1.0, 1.0, 1.0) // The point is in direct light
+                },
+                Missed => Color::init(1.0, 1.0, 1.0) // The point is in direct light
+            }
         }
+
+        shade
     }
 
     fn ambient_lightning(kt: f32, ka: Color, cd: Color) -> Color {
@@ -187,7 +204,10 @@ impl<'a> RayTracer<'a> {
                 dj = light.pos - point;
                 dj.normalize();
             },
-            AreaLight => return Color::new()
+            AreaLight => {
+                dj = light.pos - point;
+                dj.normalize();
+            }
         }
 
         let normal: Vec3 = intersection.surface_normal();
