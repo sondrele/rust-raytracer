@@ -1,5 +1,6 @@
 extern crate bmp;
 
+use std::rand::{random, Open01};
 use std::num::Float;
 use std::num::FloatMath;
 
@@ -18,6 +19,7 @@ pub mod ray;
 pub mod scene;
 
 static SCALE: f32 = 1000.0;
+static AREA_SAMPLES: uint = 10;
 
 pub struct RayTracer<'a> {
     width: uint,
@@ -117,42 +119,49 @@ impl<'a> RayTracer<'a> {
                 (ori, vec!(dir))
             },
             AreaLight => {
-                // let ori = intersection.point() + dir.mult(0.0001);
-                // let dirs = Vec::from_fn(10, || {
-                //     let
-                // })
-
-                let mut ori = intersection.point();
-                let mut dir = dest - ori;
-                dir.normalize();
-                ori = ori + dir.mult(0.0001);
-                (ori, vec!(dir))
+                let ori = intersection.point() + intersection.surface_normal().mult(0.0001);
+                let dirs = Vec::from_fn(AREA_SAMPLES, |_| -> Vec3 {
+                    let Open01(rx) = random::<Open01<f32>>();
+                    let Open01(ry) = random::<Open01<f32>>();
+                    let Open01(rz) = random::<Open01<f32>>();
+                    let mut dx = (light.pos[0] - light.dir[0]).abs() * 0.5;
+                    let mut dy = (light.pos[1] - light.dir[1]).abs() * 0.5;
+                    let mut dz = (light.pos[2] - light.dir[2]).abs() * 0.5;
+                    dx = dx - rx * (dx * 2.0);
+                    dy = dy - ry * (dy * 2.0);
+                    dz = dz - rz * (dz * 2.0);
+                    let mut dir = Vec3::init(light.pos[0] + dx, light.pos[1] + dy, light.pos[2] + dz) - ori;
+                    dir.normalize();
+                    dir
+                });
+                (ori, dirs)
             }
         };
 
-        let mut shade = Color::new();
+        let mut shade: f32 = 0.0;
 
         for &dir in dirs.iter() {
             let shadow = Ray::init(ori, dir);
-            shade = shade + match scene.intersects(&shadow) {
+            shade += match scene.intersects(&shadow) {
                 Intersected(intersection) => {
                     let material = intersection.material();
                     if material.transparency == 0.0 {
                         match light.kind {
                             PointLight if ori.distance(intersection.point()) > ori.distance(dest) =>
-                                Color::init(1.0, 1.0, 1.0), // Intersects with object behind light source
-                            _ => Color::new() // Hit something before directional light, ignoring area light
+                                1.0, // Intersects with object behind light source
+                            _ => 0.0 // Hit something before directional light, ignoring area light
                         }
                     } else { // Shape is transparent, continue recursively
-                        let shade = intersection.color().mult(material.transparency);
-                        shade * RayTracer::shadow_scalar(scene, light, &intersection, depth - 1)
+                        material.transparency * RayTracer::shadow_scalar(scene, light, &intersection, depth - 1).r_val()
                     }
                 },
-                Missed => Color::init(1.0, 1.0, 1.0) // The point is in direct light
+                Missed => 1.0 // The point is in direct light
             }
         }
 
-        shade
+        shade = shade / dirs.len() as f32;
+
+        Color::init(shade, shade, shade)
     }
 
     fn ambient_lightning(kt: f32, ka: Color, cd: Color) -> Color {
@@ -191,32 +200,52 @@ impl<'a> RayTracer<'a> {
         let ks: Color = material.specular;
         let q: f32 = material.shininess * 128.0;
 
-        let ij: Color = light.intensity;
-
-        let direct_light: Color = (ij * sj).mult(fattj);
-
-        let mut dj: Vec3;
-        match light.kind {
+        let dirs: Vec<Vec3> = match light.kind {
             DirectionalLight => {
-                dj = light.dir.invert();
+                vec!(light.dir.invert())
             },
             PointLight => {
-                dj = light.pos - point;
+                let mut dj = light.pos - point;
                 dj.normalize();
+                vec!(dj)
             },
             AreaLight => {
-                dj = light.pos - point;
-                dj.normalize();
+                let mut ori = intersection.point();
+
+                Vec::from_fn(AREA_SAMPLES, |_| -> Vec3 {
+                    let Open01(rx) = random::<Open01<f32>>();
+                    let Open01(ry) = random::<Open01<f32>>();
+                    let Open01(rz) = random::<Open01<f32>>();
+                    let mut dx = (light.pos[0] - light.dir[0]).abs() * 0.5;
+                    let mut dy = (light.pos[1] - light.dir[1]).abs() * 0.5;
+                    let mut dz = (light.pos[2] - light.dir[2]).abs() * 0.5;
+                    dx = dx - rx * (dx * 2.0);
+                    dy = dy - ry * (dy * 2.0);
+                    dz = dz - rz * (dz * 2.0);
+                    let mut dj = Vec3::init(light.pos[0] + dx, light.pos[1] + dy, light.pos[2] + dz) - ori;
+                    dj.normalize();
+                    dj
+                })
             }
+        };
+
+        let mut dir_lt = Color::new();
+        let direct_light: Color = (light.intensity * sj).mult(fattj);
+
+        let num_samples = dirs.len() as f32;
+        for &dj in dirs.iter() {
+            let normal: Vec3 = intersection.surface_normal();
+            let diffuse_light: Color = RayTracer::diffuse_lightning(kt, cd, normal, dj);
+
+            let v: Vec3 = intersection.direction().invert();
+            let specular_light: Color = RayTracer::specular_lightning(q, ks, normal, dj, v);
+
+            let mut light = direct_light * (diffuse_light + specular_light);
+            light = Color::init(light.r_val() / num_samples, light.g_val() / num_samples, light.b_val() / num_samples);
+            dir_lt = dir_lt + light;
         }
 
-        let normal: Vec3 = intersection.surface_normal();
-        let diffuse_light: Color = RayTracer::diffuse_lightning(kt, cd, normal, dj);
-
-        let v: Vec3 = intersection.direction().invert();
-        let specular_light: Color = RayTracer::specular_lightning(q, ks, normal, dj, v);
-
-        direct_light * (diffuse_light + specular_light)
+        dir_lt
     }
 
     fn shade_intersection<'b>(scene: &'a Box<IntersectableScene<'a> + 'a>, intersection: &Intersection, depth: uint) -> Color {
