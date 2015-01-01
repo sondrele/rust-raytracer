@@ -3,8 +3,7 @@ use std::io::{BufferedReader, File};
 use std::str::FromStr;
 
 use vec::Vec3;
-use scene::{BvhScene, Scene, Camera, Light};
-use scene::LightType::{DirectionalLight, PointLight, AreaLight};
+use scene::{BvhScene, Scene, Camera, Light, PointLight, AreaLight, DirectionalLight};
 use scene::material::{Material, Color};
 use scene::shapes::{sphere, poly};
 use scene::shapes::Primitive::{Sphere, Poly};
@@ -124,34 +123,23 @@ impl SceneParser {
     fn parse_light(&mut self) -> Light {
         let keyword = self.next_token();
 
-        let kind = match keyword.as_slice() {
-            "point_light" => PointLight,
-            "area_light" => AreaLight,
-            "directional_light" => DirectionalLight,
-            _ => panic!("LightType is not valid: {}", keyword)
-        };
-
         self.check_and_consume("{");
 
-        let light = match kind {
-            PointLight => Light {
-                kind: kind,
+        let light = match keyword.as_slice() {
+            "point_light" => Light::Point(PointLight {
                 pos: self.parse_vec3("position"),
-                dir: Vec3::new(),
                 intensity: self.parse_color("color")
-            },
-            AreaLight => Light {
-                kind: kind,
-                pos: self.parse_vec3("position"),
-                dir: self.parse_vec3("position"),
+            }),
+            "area_light" => Light::Area(AreaLight {
+                min: self.parse_vec3("position"),
+                max: self.parse_vec3("position"),
                 intensity: self.parse_color("color")
-            },
-            DirectionalLight => Light {
-                kind: kind,
-                pos: Vec3::new(),
+            }),
+            "directional_light" => Light::Directional(DirectionalLight {
                 dir: self.parse_vec3("direction"),
                 intensity: self.parse_color("color")
-            }
+            }),
+            _ => panic!("LightType is not valid: {}", keyword)
         };
 
         self.check_and_consume("}");

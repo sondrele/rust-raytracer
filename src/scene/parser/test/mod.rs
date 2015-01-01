@@ -1,8 +1,7 @@
 use vec::Vec3;
 use scene::parser::SceneParser;
 use scene::material::Color;
-use scene::Light;
-use scene::LightType::{DirectionalLight, PointLight, AreaLight};
+use scene::Light::{Point, Area, Directional};
 
 static TEST_PATH : &'static str   = "src/scene/parser/test/testdata-";
 
@@ -87,21 +86,31 @@ fn can_parse_color() {
 #[test]
 fn can_parse_light() {
     let mut parser = scene_parser("light");
-    let p_light: Light = parser.parse_light();
-    assert_eq!(p_light.kind, PointLight);
-    assert_eq!(p_light.pos.x, -1.0);
-    assert_eq!(p_light.intensity.r_val(), 1.0);
 
-    let a_light = parser.parse_light();
-    assert_eq!(a_light.kind, AreaLight);
-    assert_eq!(a_light.pos.x, 0.0);
-    assert_eq!(a_light.dir.x, 200.0);
-    assert_eq!(a_light.intensity.r_val(), 0.0);
+    match parser.parse_light() {
+        Point(ref p_light) => {
+            assert_eq!(p_light.pos.x, -1.0);
+            assert_eq!(p_light.intensity.r_val(), 1.0);
+        },
+        _ => ()
+    }
 
-    let d_light = parser.parse_light();
-    assert_eq!(d_light.kind, DirectionalLight);
-    assert_eq!(d_light.dir.x, 0.5);
-    assert_eq!(d_light.intensity.r_val(), 0.5);
+    match parser.parse_light() {
+        Area(a_light) => {
+            assert_eq!(a_light.min.x, 0.0);
+            assert_eq!(a_light.max.x, 200.0);
+            assert_eq!(a_light.intensity.r_val(), 0.0);
+        },
+        _ => ()
+    }
+
+    match parser.parse_light() {
+        Directional(ref d_light) => {
+            assert_eq!(d_light.dir.x, 0.5);
+            assert_eq!(d_light.intensity.r_val(), 0.5);
+        },
+        _ => ()
+    }
 }
 
 #[test]

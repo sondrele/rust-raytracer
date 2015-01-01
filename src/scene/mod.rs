@@ -1,3 +1,7 @@
+use std::rand::{random, Open01};
+use std::num::Float;
+use std::num::FloatMath;
+
 use vec::Vec3;
 use ray::Ray;
 use scene::bvh::{NodeIntersection, Tree};
@@ -5,6 +9,7 @@ use scene::material::Color;
 use scene::shapes::{Shape, ShapeIntersection};
 use scene::intersection::Intersection;
 use self::SceneIntersection::{Intersected, Missed};
+use self::Light::{Point, Area, Directional};
 
 pub mod parser;
 pub mod material;
@@ -12,29 +17,85 @@ pub mod shapes;
 pub mod intersection;
 pub mod bvh;
 
-// Is it possible to mplement traits instead of using enums,
-// make the fields private data and call trait methods
-// according to the different types of lights?
 #[deriving(Copy, PartialEq, Clone, Show)]
-pub enum LightType {
-    PointLight,
-    AreaLight,
-    DirectionalLight
+pub enum Light {
+    Point(PointLight),
+    Area(AreaLight),
+    Directional(DirectionalLight)
 }
 
-#[deriving(Copy)]
-pub struct Light {
-    pub kind: LightType,
+impl Light {
+    pub fn intensity(&self) -> Color {
+        match self {
+            &Point(ref light) => light.intensity,
+            &Area(ref light) => light.intensity,
+            &Directional(ref light) => light.intensity
+        }
+    }
+
+    pub fn position(&self) -> Vec3 {
+        match self {
+            &Point(ref light) => light.pos,
+            &Area(ref light) => light.sample_point(),
+            &Directional(_) => Vec3::new()
+        }
+    }
+}
+
+#[deriving(Copy, PartialEq, Clone, Show)]
+pub struct PointLight {
     pub pos: Vec3,
+    pub intensity: Color
+}
+
+impl PointLight {
+    pub fn new() -> PointLight {
+        PointLight {
+            pos: Vec3::new(),
+            intensity: Color::new()
+        }
+    }
+}
+
+#[deriving(Copy, PartialEq, Clone, Show)]
+pub struct AreaLight {
+    pub min: Vec3,
+    pub max: Vec3,
+    pub intensity: Color
+}
+
+impl AreaLight {
+    pub fn new() -> AreaLight {
+        AreaLight {
+            min: Vec3::new(),
+            max: Vec3::new(),
+            intensity: Color::new()
+        }
+    }
+
+    pub fn sample_point(&self) -> Vec3 {
+        let Open01(rx) = random::<Open01<f32>>();
+        let Open01(ry) = random::<Open01<f32>>();
+        let Open01(rz) = random::<Open01<f32>>();
+        let mut dx = (self.max[0] - self.min[0]).abs() * 0.5;
+        let mut dy = (self.max[1] - self.min[1]).abs() * 0.5;
+        let mut dz = (self.max[2] - self.min[2]).abs() * 0.5;
+        dx = dx - rx * (dx * 2.0);
+        dy = dy - ry * (dy * 2.0);
+        dz = dz - rz * (dz * 2.0);
+        Vec3::init(self.max[0] + dx, self.max[1] + dy, self.max[2] + dz)
+    }
+}
+
+#[deriving(Copy, PartialEq, Clone, Show)]
+pub struct DirectionalLight {
     pub dir: Vec3,
     pub intensity: Color
 }
 
-impl Light {
-    pub fn new(kind: LightType) -> Light {
-        Light{
-            kind: kind,
-            pos: Vec3::new(),
+impl DirectionalLight {
+    pub fn new() -> DirectionalLight {
+        DirectionalLight {
             dir: Vec3::new(),
             intensity: Color::new()
         }
