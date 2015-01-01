@@ -47,6 +47,7 @@ fn main() {
         optflag("h", "help", "Print this help menu"),
         optflag("b", "bvh", "Optimize scene intersection with BVH-tree"),
         optopt("s", "size", "The width and height of the image to be generated", "-s 500"),
+        optopt("a", "arealight-samples", "The number of times to sample the area lights", "-a 1000"),
         optopt("d", "depth", "The depth of the recursion in the main loop", "-d 10"),
         optopt("i", "scene", "The name of a scene located in the ./scenes directory", "-i test01"),
         optopt("o", "out", "The name of the image to be generated", "-o image.bmp")
@@ -58,6 +59,7 @@ fn main() {
     }
 
     let size = get_opt(&matches, "s", 100);
+    let area_samples = get_opt(&matches, "a", 10);
     let depth = get_opt(&matches, "d", 10);
     let scene = get_scene(&matches, "test01");
     let out = get_str(&matches, "o", "img") + ".bmp";
@@ -68,7 +70,7 @@ fn main() {
     } else {
         box parser.parse_scene()
     };
-    let mut tracer = RayTracer::init(size, size, depth);
+    let mut tracer = RayTracer::init(size, size, depth, area_samples);
     tracer.set_scene(scene);
     let img = tracer.trace_rays();
     img.save(out.as_slice());
