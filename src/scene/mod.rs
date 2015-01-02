@@ -40,6 +40,24 @@ impl Light {
             &Directional(_) => Vec3::new()
         }
     }
+
+    pub fn get_dir(&self, point: Vec3) -> Vec3 {
+        match self {
+            &Light::Directional(ref light) => {
+                light.dir.invert()
+            },
+            &Light::Point(ref light) => {
+                let mut dir = light.pos - point;
+                dir.normalize();
+                dir
+            },
+            &Light::Area(ref light) => {
+                let mut dir = light.sample_point() - point;
+                dir.normalize();
+                dir
+            }
+        }
+    }
 }
 
 #[deriving(Copy, PartialEq, Clone, Show)]
