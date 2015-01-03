@@ -12,6 +12,7 @@ use self::SceneIntersection::{Intersected, Missed};
 use self::Light::{Point, Area, Directional};
 
 pub mod parser;
+pub mod from_obj;
 pub mod material;
 pub mod shapes;
 pub mod intersection;

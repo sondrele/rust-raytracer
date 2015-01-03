@@ -8,4 +8,7 @@ authors = ["Sondre Lefsaker"]
 opt-level = 2
 
 [dependencies]
-bmp="0.0.3"
+bmp = "0.0.3"
+
+[dependencies.wavefront_obj]
+git = "https://github.com/sondrele/wavefront_obj.git"

@@ -3,10 +3,16 @@ name = "rstracer"
 version = "0.0.2"
 dependencies = [
  "bmp 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wavefront_obj 0.0.0 (git+https://github.com/sondrele/wavefront_obj.git)",
 ]
 
 [[package]]
 name = "bmp"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "wavefront_obj"
+version = "0.0.0"
+source = "git+https://github.com/sondrele/wavefront_obj.git#90a9bdc0626a5a0ee6716d4ea38c952171857450"
 
