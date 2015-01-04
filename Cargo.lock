@@ -14,5 +14,5 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "wavefront_obj"
 version = "0.0.0"
-source = "git+https://github.com/sondrele/wavefront_obj.git#90a9bdc0626a5a0ee6716d4ea38c952171857450"
+source = "git+https://github.com/sondrele/wavefront_obj.git#e5df7708285da05294578000a3670c8d32614399"
 
