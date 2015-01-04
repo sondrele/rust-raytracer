@@ -1,7 +1,8 @@
 use std::cmp::Ordering;
 use std::num::Float;
+use std::ops::{Add, Sub, Mul, Index};
 
-#[deriving(Clone, Copy, Show)]
+#[derive(Clone, Copy, Show)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,
@@ -37,25 +38,33 @@ impl PartialOrd for Vec3 {
     }
 }
 
-impl Add<Vec3, Vec3> for Vec3 {
+impl Add for Vec3 {
+    type Output = Vec3;
+
     fn add(self, vec: Vec3) -> Vec3 {
         Vec3::init(self.x + vec.x, self.y + vec.y, self.z + vec.z)
     }
 }
 
-impl Sub<Vec3, Vec3> for Vec3 {
+impl Sub for Vec3 {
+    type Output = Vec3;
+
     fn sub(self, vec: Vec3) -> Vec3 {
         Vec3::init(self.x - vec.x, self.y - vec.y, self.z - vec.z)
     }
 }
 
-impl Mul<Vec3, Vec3> for Vec3 {
+impl Mul for Vec3 {
+    type Output = Vec3;
+
     fn mul(self, vec: Vec3) -> Vec3 {
         Vec3::init(self.x * vec.x, self.y * vec.y, self.z * vec.z)
     }
 }
 
-impl Index<u32, f32> for Vec3 {
+impl Index<u32> for Vec3 {
+    type Output = f32;
+
     fn index<'a>(&'a self, index: &u32) -> &'a f32 {
         match index {
             &0 => &self.x,

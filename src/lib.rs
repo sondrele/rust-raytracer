@@ -1,3 +1,5 @@
+#![feature(associated_types)]
+
 extern crate bmp;
 
 use std::num::Float;

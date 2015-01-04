@@ -17,7 +17,7 @@ pub mod shapes;
 pub mod intersection;
 pub mod bvh;
 
-#[deriving(Copy, PartialEq, Clone, Show)]
+#[derive(Copy, PartialEq, Clone, Show)]
 pub enum Light {
     Point(PointLight),
     Area(AreaLight),
@@ -60,7 +60,7 @@ impl Light {
     }
 }
 
-#[deriving(Copy, PartialEq, Clone, Show)]
+#[derive(Copy, PartialEq, Clone, Show)]
 pub struct PointLight {
     pub pos: Vec3,
     pub intensity: Color
@@ -75,7 +75,7 @@ impl PointLight {
     }
 }
 
-#[deriving(Copy, PartialEq, Clone, Show)]
+#[derive(Copy, PartialEq, Clone, Show)]
 pub struct AreaLight {
     pub min: Vec3,
     pub max: Vec3,
@@ -105,7 +105,7 @@ impl AreaLight {
     }
 }
 
-#[deriving(Copy, PartialEq, Clone, Show)]
+#[derive(Copy, PartialEq, Clone, Show)]
 pub struct DirectionalLight {
     pub dir: Vec3,
     pub intensity: Color
@@ -120,7 +120,7 @@ impl DirectionalLight {
     }
 }
 
-#[deriving(Copy)]
+#[derive(Copy)]
 pub struct Camera {
     pub pos: Vec3,
     pub view_dir: Vec3,
