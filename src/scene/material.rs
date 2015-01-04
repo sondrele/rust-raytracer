@@ -1,7 +1,8 @@
 use std::num::Float;
 use bmp::Pixel;
+use std::ops::{Add, Mul};
 
-#[deriving(Clone, Copy, PartialEq, Show)]
+#[derive(Clone, Copy, PartialEq, Show)]
 pub struct Color {
     r: f32,
     g: f32,
@@ -66,19 +67,23 @@ impl Color {
     }
 }
 
-impl Mul<Color, Color> for Color {
+impl Mul for Color {
+    type Output = Color;
+
     fn mul(self, col: Color) -> Color {
         Color::init(self.r * col.r, self.g * col.g, self.b * col.b)
     }
 }
 
-impl Add<Color, Color> for Color {
+impl Add for Color {
+    type Output = Color;
+
     fn add(self, col: Color) -> Color {
         Color::init(self.r + col.r, self.g + col.g, self.b + col.b)
     }
 }
 
-#[deriving(Clone, Copy, PartialEq, Show)]
+#[derive(Clone, Copy, PartialEq, Show)]
 pub struct Material {
     pub diffuse: Color,
     pub ambient: Color,

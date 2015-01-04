@@ -5,20 +5,20 @@ use scene::shapes::{BoundingBox, Primitive, Shape, ShapeIntersection};
 use self::NodeIntersection::{Hit, Missed};
 
 
-#[deriving(PartialEq, Show)]
+#[derive(PartialEq, Show)]
 pub enum Node<'a> {
     Member(Box<TreeNode<'a>>),
     Leaf(Box<TreeNode<'a>>),
     Empty
 }
 
-#[deriving(PartialEq, Show)]
+#[derive(PartialEq, Show)]
 pub enum NodeIntersection<'a> {
     Hit(&'a Box<TreeNode<'a>>, f32),
     Missed
 }
 
-#[deriving(PartialEq, Show)]
+#[derive(PartialEq, Show)]
 pub struct TreeNode<'a> {
     left: Node<'a>,
     right: Node<'a>,

@@ -1,11 +1,12 @@
 use std::num::FloatMath;
+use std::ops::Index;
 
 use vec::Vec3;
 use ray::Ray;
 use scene::material::{Material, Color};
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
-#[deriving(Copy, PartialEq, Show)]
+#[derive(Copy, PartialEq, Show)]
 pub struct Vertex {
     pub mat_index: u32,
     pub has_normal: bool,
@@ -33,7 +34,9 @@ impl Vertex {
     }
 }
 
-impl Index<u32, f32> for Vertex {
+impl Index<u32> for Vertex {
+    type Output = f32;
+
     fn index<'a>(&'a self, index: &u32) -> &'a f32 {
         match index {
             &0 => &self.position[0],
@@ -44,10 +47,10 @@ impl Index<u32, f32> for Vertex {
     }
 }
 
-#[deriving(Clone, PartialEq, Show)]
+#[derive(Clone, PartialEq, Show)]
 pub struct Poly {
     pub materials: Vec<Material>,
-    pub vertices: [Vertex, ..3],
+    pub vertices: [Vertex; 3],
     pub vertex_material: bool,
     pub vertex_normal: bool
 }
@@ -102,7 +105,9 @@ impl Poly {
     }
 }
 
-impl Index<u32, Vertex> for Poly {
+impl Index<u32> for Poly {
+    type Output = Vertex;
+
     fn index<'a>(&'a self, index: &u32) -> &'a Vertex {
         match index {
             &0 => &self.vertices[0],
