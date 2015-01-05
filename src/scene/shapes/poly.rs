@@ -90,7 +90,8 @@ impl Poly {
 
     fn interpolated_color(&self, point: Vec3) -> Color {
         let (area0, area1, area2) = self.weighted_areas(point);
-        self.materials[0].diffuse.mult(area2) + self.materials[1].diffuse.mult(area1) + self.materials[2].diffuse.mult(area0)
+        self.materials[0].diffuse.mult(area2) + self.materials[1].diffuse.mult(area1)
+            + self.materials[2].diffuse.mult(area0)
     }
 
     fn static_normal(&self) -> Vec3 {

@@ -10,6 +10,7 @@ use self::Primitive::{Sphere, Poly};
 
 pub mod sphere;
 pub mod poly;
+pub mod poly_mesh;
 
 pub enum ShapeIntersection<'a> {
     Hit(f32),
