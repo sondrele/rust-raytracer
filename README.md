@@ -1,6 +1,7 @@
 rust-raytracer
 ==============
 
+[![Build Status](https://travis-ci.org/sondrele/rust-raytracer.svg)](https://travis-ci.org/sondrele/rust-raytracer)
 Todo
 ----
 * Make a structure where Poly can reference material - this avoids duplicating material for each Poly
