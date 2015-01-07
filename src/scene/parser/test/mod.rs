@@ -209,3 +209,10 @@ fn can_parse_scene() {
     assert_eq!(scene.lights.len(), 3);
     assert_eq!(scene.primitives.len(), 13);
 }
+
+#[test]
+fn can_parse_mesh() {
+    let mut parser = scene_parser("per-vertex-polyset");
+    let mesh = parser.parse_mesh();
+    assert_eq!(mesh.polys.len(), 3);
+}

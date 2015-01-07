@@ -6,6 +6,7 @@ use vec::Vec3;
 use scene::{BvhScene, Scene, Camera, Light, PointLight, AreaLight, DirectionalLight};
 use scene::material::{Material, Color};
 use scene::shapes::{sphere, poly};
+use scene::shapes::poly_mesh::{Mesh, PolyIndex};
 use scene::shapes::Primitive::{Sphere, Poly};
 
 pub struct SceneParser {
@@ -16,6 +17,7 @@ pub struct SceneParser {
 }
 
 impl SceneParser {
+
     pub fn new(scene: String) -> SceneParser {
         SceneParser{
             reader: SceneParser::read_file(scene),
@@ -294,6 +296,113 @@ impl SceneParser {
 
         self.check_and_consume("}");
         polyset
+    }
+
+    fn parse_mesh_vertex(&mut self, has_normal: bool,
+                         has_material: bool) -> (Vec3, Option<Vec3>, Option<uint>) {
+        let pos = self.parse_vec3("pos");
+        let norm = match has_normal {
+            true => {
+                Some(self.parse_vec3("norm"))
+            },
+            false => None
+        };
+
+        let mat_index = match has_material {
+            true => {
+                self.check_and_consume("materialIndex");
+                Some(self.next_num())
+            },
+            false => None
+        };
+        (pos, norm, mat_index)
+    }
+
+
+    fn parse_mesh_polys(&mut self, num_polys: uint, per_vertex_normal: bool,
+                        material_binding: bool) -> (Vec<PolyIndex>, Vec<Vec3>, Vec<Vec3>) {
+        let mut poly_indices = Vec::new();
+        let mut vertices = Vec::new();
+        let mut normals = Vec::new();
+
+        for _ in range(0, num_polys) {
+            self.check_and_consume("poly");
+            self.check_and_consume("{");
+            self.check_and_consume("numVertices");
+            self.check_and_consume("3"); // Always 3
+
+            let (x_pos, x_norm, x_mat_index) = self.parse_mesh_vertex(per_vertex_normal,
+                material_binding);
+            let (y_pos, y_norm, y_mat_index) = self.parse_mesh_vertex(per_vertex_normal,
+                material_binding);
+            let (z_pos, z_norm, z_mat_index) = self.parse_mesh_vertex(per_vertex_normal,
+                material_binding);
+
+            vertices.push(x_pos);
+            vertices.push(z_pos);
+            vertices.push(y_pos);
+
+            let l = vertices.len();
+            let x_vert_index = l - 3;
+            let y_vert_index = l - 2;
+            let z_vert_index = l - 1;
+
+            let (x_norm_index, y_norm_index, z_norm_index) = match (x_norm, y_norm, z_norm) {
+                (Some(xn), Some(yn), Some(zn)) => {
+                    normals.push(xn);
+                    normals.push(yn);
+                    normals.push(zn);
+
+                    let l = normals.len();
+                    (Some(l - 3), Some(l - 2), Some(l - 1))
+                },
+                _ => (None, None, None)
+            };
+
+            self.check_and_consume("}");
+
+            poly_indices.push((
+                (x_vert_index, x_norm_index, x_mat_index),
+                (y_vert_index, y_norm_index, y_mat_index),
+                (z_vert_index, z_norm_index, z_mat_index)
+            ))
+        }
+
+        (poly_indices, vertices, normals)
+    }
+
+    fn parse_mesh(&mut self) -> Mesh {
+        self.check_and_consume("poly_set");
+        self.check_and_consume("{");
+        self.check_and_consume("name");
+        self.consume_next();
+        self.check_and_consume("numMaterials");
+
+
+        let mut num_materials: uint = self.next_num();
+        let mut materials = Vec::with_capacity(num_materials);
+        while num_materials > 0 {
+            let material = self.parse_material();
+            materials.push(material);
+            num_materials -= 1;
+        }
+
+        self.check_and_consume("type");
+        self.consume_next(); // TODO: Use this field later
+        let per_vertex_normal = self.parse_bool("normType", "PER_VERTEX_NORMAL");
+        let material_binding = self.parse_bool("materialBinding", "PER_VERTEX_MATERIAL");
+        self.check_and_consume("hasTextureCoords");
+        self.consume_next(); // TODO: This field is probably never used
+        self.check_and_consume("rowSize");
+        self.consume_next(); // TODO: This field is probably never used
+        self.check_and_consume("numPolys");
+
+        let num_polys = self.next_num();
+        let (poly_indices, vertices, normals) = self.parse_mesh_polys(num_polys,
+                                                                      per_vertex_normal,
+                                                                      material_binding);
+        self.check_and_consume("}");
+        Mesh::from_data(vertices, normals, materials, poly_indices)
     }
 
     fn parse_camera(&mut self) -> Camera {

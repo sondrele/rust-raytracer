@@ -31,11 +31,12 @@ pub struct Poly {
     pub z: PolyVertex,
 }
 
+#[derive(Clone, PartialEq, Show)]
 pub struct Mesh {
     pub vertices: Vec<Rc<Vec3>>,
     pub normals: Vec<Rc<Vec3>>,
     pub materials: Vec<Rc<Material>>,
-    polys: Vec<Poly>
+    pub polys: Vec<Poly>
 }
 
 impl Mesh {
@@ -48,7 +49,26 @@ impl Mesh {
         }
     }
 
-    pub fn build_polys(&mut self, poly_indices: Vec<PolyIndex>) {
+    pub fn from_data(vertices: Vec<Vec3>, normals: Vec<Vec3>, materials: Vec<Material>,
+                     polys: Vec<PolyIndex>) -> Mesh {
+        let mut mesh = Mesh::new();
+        for &v in vertices.iter() {
+            mesh.vertices.push(Rc::new(v));
+        }
+
+        for &n in normals.iter() {
+            mesh.normals.push(Rc::new(n));
+        }
+
+        for &m in materials.iter() {
+            mesh.materials.push(Rc::new(m));
+        }
+
+        mesh.build_polys(polys);
+        mesh
+    }
+
+    fn build_polys(&mut self, poly_indices: Vec<PolyIndex>) {
         self.polys = Vec::new();
 
         for p in poly_indices.iter() {
