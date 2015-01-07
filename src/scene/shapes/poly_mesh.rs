@@ -5,38 +5,39 @@ use ray::Ray;
 use scene::material::{Material, Color};
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
-// Index into the 'vertices' Vec in PolyMesh
-// pub type VertexIndex<'a> = &'a Vec3;
-type VertexIndex = uint;
+// Index into the 'vertices' Vec in Mesh
+type PointIndex = uint;
 
-// Index into the 'normals' Vec in PolyMesh
-// pub type NormalIndex<'a> = &'a Vec3;
+// Index into the 'normals' Vec in Mesh
 type NormalIndex = uint;
 
-// Index into the 'materials' Vec in PolyMesh
-// pub type MaterialIndex<'a> = &'a Material;
+// Index into the 'materials' Vec in Mesh
 type MaterialIndex = uint;
 
-type PolyVertex = (VertexIndex, Option<NormalIndex>, Option<MaterialIndex>);
+// Indices for the vertices of a PolyIndex
+type VertexIndex = (PointIndex, Option<NormalIndex>, Option<MaterialIndex>);
 
-type PolyIndex = (PolyVertex, PolyVertex, PolyVertex);
+// The Index-type stored in the Mesh. These area used to generate a Poly
+type PolyIndex = (VertexIndex, VertexIndex, VertexIndex);
 
-pub struct Poly<'a>{
-    pub x: (&'a Vec3, Option<&'a Vec3>, Option<&'a Material>),
-    pub y: (&'a Vec3, Option<&'a Vec3>, Option<&'a Material>),
-    pub z: (&'a Vec3, Option<&'a Vec3>, Option<&'a Material>),
+pub type PolyVertex<'a> = (&'a Vec3, Option<&'a Vec3>, Option<&'a Material>);
+
+pub struct Poly<'a> {
+    pub x: PolyVertex<'a>,
+    pub y: PolyVertex<'a>,
+    pub z: PolyVertex<'a>,
 }
 
-pub struct PolyMesh {
+pub struct Mesh {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub materials: Vec<Material>,
     poly_indices: Vec<PolyIndex>
 }
 
-impl PolyMesh {
-    pub fn new() -> PolyMesh {
-        PolyMesh {
+impl Mesh {
+    pub fn new() -> Mesh {
+        Mesh {
             vertices: Vec::new(),
             normals: Vec::new(),
             materials: Vec::new(),
@@ -242,10 +243,10 @@ mod tests {
     use vec::Vec3;
     use ray::Ray;
     use scene::shapes::ShapeIntersection;
-    use scene::shapes::poly_mesh::{Poly, PolyMesh};
+    use scene::shapes::poly_mesh::{Poly, Mesh};
 
-    fn create_mesh() -> PolyMesh {
-        let mut m = PolyMesh::new();
+    fn create_mesh() -> Mesh {
+        let mut m = Mesh::new();
         m.vertices = vec!(
             Vec3::init(0.0, 0.0, 0.0), Vec3::init(2.0, 0.0, 0.0), Vec3::init(0.0, 2.0, 0.0),
             Vec3::init(0.0, 0.0, -2.0), Vec3::init(4.0, 0.0, -2.0), Vec3::init(0.0, 4.0, -2.0),
