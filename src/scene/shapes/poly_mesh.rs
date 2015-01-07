@@ -55,9 +55,12 @@ impl Mesh {
             let poly = match p {
                 &((xv, Some(xn), Some(xm)), (yv, Some(yn), Some(ym)), (zv, Some(zn), Some(zm))) => {
                     Poly {
-                        x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()), Some(self.materials[xm].clone())),
-                        y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()), Some(self.materials[ym].clone())),
-                        z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()), Some(self.materials[zm].clone()))
+                        x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()),
+                            Some(self.materials[xm].clone())),
+                        y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()),
+                            Some(self.materials[ym].clone())),
+                        z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()),
+                            Some(self.materials[zm].clone()))
                     }
                 },
                 &((xv, Some(xn), None), (yv, Some(yn), None), (zv, Some(zn), None)) => {
@@ -81,7 +84,7 @@ impl Mesh {
                         z: (self.vertices[zv].clone(), None, None)
                     }
                 },
-                _ => panic!("Invalid PolyIndex")
+                _ => panic!("Invalid PolyIndex: {}", p)
             };
             self.polys.push(poly);
         }
@@ -259,10 +262,18 @@ mod tests {
     fn create_mesh<'a>() -> Mesh {
         let mut m = Mesh::new();
         m.vertices = vec!(
-            Rc::new(Vec3::init(0.0, 0.0, 0.0)), Rc::new(Vec3::init(2.0, 0.0, 0.0)), Rc::new(Vec3::init(0.0, 2.0, 0.0)),
-            Rc::new(Vec3::init(0.0, 0.0, -2.0)), Rc::new(Vec3::init(4.0, 0.0, -2.0)), Rc::new(Vec3::init(0.0, 4.0, -2.0)),
-            Rc::new(Vec3::init(0.0, 0.0, -1.0)), Rc::new(Vec3::init(2.0, 0.0, -1.0)), Rc::new(Vec3::init(0.0, 2.0, -1.0)),
-            Rc::new(Vec3::init(0.0, 0.0, -3.0)), Rc::new(Vec3::init(6.0, 0.0, -3.0)), Rc::new(Vec3::init(0.0, 6.0, -3.0))
+            Rc::new(Vec3::init(0.0, 0.0, 0.0)),
+            Rc::new(Vec3::init(2.0, 0.0, 0.0)),
+            Rc::new(Vec3::init(0.0, 2.0, 0.0)),
+            Rc::new(Vec3::init(0.0, 0.0, -2.0)),
+            Rc::new(Vec3::init(4.0, 0.0, -2.0)),
+            Rc::new(Vec3::init(0.0, 4.0, -2.0)),
+            Rc::new(Vec3::init(0.0, 0.0, -1.0)),
+            Rc::new(Vec3::init(2.0, 0.0, -1.0)),
+            Rc::new(Vec3::init(0.0, 2.0, -1.0)),
+            Rc::new(Vec3::init(0.0, 0.0, -3.0)),
+            Rc::new(Vec3::init(6.0, 0.0, -3.0)),
+            Rc::new(Vec3::init(0.0, 6.0, -3.0))
         );
         m.build_polys(vec!(
             ((0, None, None), (1, None, None), (2, None, None)),
