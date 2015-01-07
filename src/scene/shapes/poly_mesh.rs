@@ -1,3 +1,5 @@
+use std::rc::Rc;
+use std::ops::Deref;
 use std::num::FloatMath;
 
 use vec::Vec3;
@@ -5,106 +7,147 @@ use ray::Ray;
 use scene::material::{Material, Color};
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
-// Index into the 'vertices' Vec in Mesh
+// Index into the 'vertices' Vec in RawMesh
 type PointIndex = uint;
 
-// Index into the 'normals' Vec in Mesh
+// Index into the 'normals' Vec in RawMesh
 type NormalIndex = uint;
 
-// Index into the 'materials' Vec in Mesh
+// Index into the 'materials' Vec in RawMesh
 type MaterialIndex = uint;
 
 // Indices for the vertices of a PolyIndex
 type VertexIndex = (PointIndex, Option<NormalIndex>, Option<MaterialIndex>);
 
-// The Index-type stored in the Mesh. These area used to generate a Poly
+// The Index-type stored in the RawMesh. These area used to generate a Poly
 type PolyIndex = (VertexIndex, VertexIndex, VertexIndex);
 
-pub type PolyVertex<'a> = (&'a Vec3, Option<&'a Vec3>, Option<&'a Material>);
+pub type PolyVertex = (Rc<Vec3>, Option<Rc<Vec3>>, Option<Rc<Material>>);
 
-pub struct Poly<'a> {
-    pub x: PolyVertex<'a>,
-    pub y: PolyVertex<'a>,
-    pub z: PolyVertex<'a>,
-}
-
-pub struct Mesh {
+pub struct RawMesh {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub materials: Vec<Material>,
     poly_indices: Vec<PolyIndex>
 }
 
-impl Mesh {
-    pub fn new() -> Mesh {
-        Mesh {
+impl RawMesh {
+    pub fn new() -> RawMesh {
+        RawMesh {
             vertices: Vec::new(),
             normals: Vec::new(),
             materials: Vec::new(),
             poly_indices: Vec::new()
         }
     }
+}
 
-    pub fn get_poly(&self, index: uint) -> Poly {
-        let p = &self.poly_indices[index];
-        match p {
-            &((xv, Some(xn), Some(xm)), (yv, Some(yn), Some(ym)), (zv, Some(zn), Some(zm))) => {
-                Poly {
-                    x: (&self.vertices[xv], Some(&self.normals[xn]), Some(&self.materials[xm])),
-                    y: (&self.vertices[yv], Some(&self.normals[yn]), Some(&self.materials[ym])),
-                    z: (&self.vertices[zv], Some(&self.normals[zn]), Some(&self.materials[zm]))
-                }
-            },
-            &((xv, Some(xn), None), (yv, Some(yn), None), (zv, Some(zn), None)) => {
-                Poly {
-                    x: (&self.vertices[xv], Some(&self.normals[xn]), None),
-                    y: (&self.vertices[yv], Some(&self.normals[yn]), None),
-                    z: (&self.vertices[zv], Some(&self.normals[zn]), None)
-                }
-            },
-            &((xv, None, Some(xm)), (yv, None, Some(ym)), (zv, None, Some(zm))) => {
-                Poly {
-                    x: (&self.vertices[xv], None, Some(&self.materials[xm])),
-                    y: (&self.vertices[yv], None, Some(&self.materials[ym])),
-                    z: (&self.vertices[zv], None, Some(&self.materials[zm]))
-                }
-            },
-            &((xv, None, None), (yv, None, None), (zv, None, None)) => {
-                Poly {
-                    x: (&self.vertices[xv], None, None),
-                    y: (&self.vertices[yv], None, None),
-                    z: (&self.vertices[zv], None, None)
-                }
-            },
-            _ => panic!("Invalid PolyIndex")
+#[derive(Clone, PartialEq, Show)]
+pub struct Poly {
+    pub x: PolyVertex,
+    pub y: PolyVertex,
+    pub z: PolyVertex,
+}
+
+pub struct Mesh {
+    pub vertices: Vec<Rc<Vec3>>,
+    pub normals: Vec<Rc<Vec3>>,
+    pub materials: Vec<Rc<Material>>,
+    polys: Vec<Poly>
+}
+
+impl Mesh {
+    fn new() -> Mesh {
+        Mesh {
+            vertices: Vec::new(),
+            normals: Vec::new(),
+            materials: Vec::new(),
+            polys: Vec::new()
         }
     }
 
-    pub fn intersects(&self, ray: &Ray) -> ShapeIntersection {
+    pub fn build(mesh: RawMesh) -> Mesh {
+        let mut m = Mesh::new();
+        for v in mesh.vertices.iter() {
+            m.vertices.push(Rc::new(v.clone()))
+        }
+
+        for n in mesh.normals.iter() {
+            m.normals.push(Rc::new(n.clone()))
+        }
+
+        for mtl in mesh.materials.iter() {
+            m.materials.push(Rc::new(mtl.clone()))
+        }
+
+        for p in mesh.poly_indices.iter() {
+            let poly = match p {
+                &((xv, Some(xn), Some(xm)), (yv, Some(yn), Some(ym)), (zv, Some(zn), Some(zm))) => {
+                    Poly {
+                        x: (m.vertices[xv].clone(), Some(m.normals[xn].clone()), Some(m.materials[xm].clone())),
+                        y: (m.vertices[yv].clone(), Some(m.normals[yn].clone()), Some(m.materials[ym].clone())),
+                        z: (m.vertices[zv].clone(), Some(m.normals[zn].clone()), Some(m.materials[zm].clone()))
+                    }
+                },
+                &((xv, Some(xn), None), (yv, Some(yn), None), (zv, Some(zn), None)) => {
+                    Poly {
+                        x: (m.vertices[xv].clone(), Some(m.normals[xn].clone()), None),
+                        y: (m.vertices[yv].clone(), Some(m.normals[yn].clone()), None),
+                        z: (m.vertices[zv].clone(), Some(m.normals[zn].clone()), None)
+                    }
+                },
+                &((xv, None, Some(xm)), (yv, None, Some(ym)), (zv, None, Some(zm))) => {
+                    Poly {
+                        x: (m.vertices[xv].clone(), None, Some(m.materials[xm].clone())),
+                        y: (m.vertices[yv].clone(), None, Some(m.materials[ym].clone())),
+                        z: (m.vertices[zv].clone(), None, Some(m.materials[zm].clone()))
+                    }
+                },
+                &((xv, None, None), (yv, None, None), (zv, None, None)) => {
+                    Poly {
+                        x: (m.vertices[xv].clone(), None, None),
+                        y: (m.vertices[yv].clone(), None, None),
+                        z: (m.vertices[zv].clone(), None, None)
+                    }
+                },
+                _ => panic!("Invalid PolyIndex")
+            };
+            m.polys.push(poly);
+        }
+        // for i in range(0, m.mesh.poly_indices.len()) {
+        //     m.polys.push(Rc::new(m.mesh.get_poly(i)))
+        // }
+        m
+    }
+
+    pub fn intersects(&self, ray: &Ray) -> (ShapeIntersection, uint) {
         let mut point = 0.0;
+        let mut index = 0;
 
         let mut has_intersected = false;
-        for i in range(0, self.poly_indices.len()) {
-            let p = self.get_poly(i);
+        for i in range(0, self.polys.len()) {
+            let ref p = self.polys[i];
             match p.intersects(ray) {
                 ShapeIntersection::Hit(pt) if !has_intersected => {
                     point = pt;
+                    index = i;
                     has_intersected = true;
                 }
                 ShapeIntersection::Hit(pt) if has_intersected && pt < point => {
                     point = pt;
+                    index = i;
                 },
                 _ => ()
             }
         }
         match has_intersected {
-            true => ShapeIntersection::Hit(point),
-            false => ShapeIntersection::Missed
+            true => (ShapeIntersection::Hit(point), index),
+            false => (ShapeIntersection::Missed, index)
         }
     }
 }
 
-impl<'a> Poly<'a> {
+impl Poly {
 
     fn weighted_areas(&self, point: Vec3) -> (f32, f32, f32) {
         let area = Vec3::get_area(*self.x.0, *self.y.0, *self.z.0);
@@ -120,8 +163,8 @@ impl<'a> Poly<'a> {
     }
 
     fn interpolated_color(&self, point: Vec3) -> Color {
-        match (self.x.2, self.y.2, self.z.2) {
-            (Some(idx_x), Some(idx_y), Some(idx_z)) => {
+        match (&self.x.2, &self.y.2, &self.z.2) {
+            (&Some(ref idx_x), &Some(ref idx_y), &Some(ref idx_z)) => {
                 let (area0, area1, area2) = self.weighted_areas(point);
                 idx_x.diffuse.mult(area2) + idx_y.diffuse.mult(area1)
                     + idx_z.diffuse.mult(area0)
@@ -139,8 +182,8 @@ impl<'a> Poly<'a> {
     }
 
     fn interpolated_normal(&self, point: Vec3) -> Vec3 {
-        match (self.x.1, self.y.1, self.z.1) {
-            (Some(norm_x), Some(norm_y), Some(norm_z)) => {
+        match (&self.x.1, &self.y.1, &self.z.1) {
+            (&Some(ref norm_x), &Some(ref norm_y), &Some(ref norm_z)) => {
                 let (area0, area1, area2) = self.weighted_areas(point);
                 let mut norm = norm_x.mult(area2) + norm_y.mult(area1) + norm_z.mult(area0);
                 norm.normalize();
@@ -151,7 +194,7 @@ impl<'a> Poly<'a> {
     }
 }
 
-impl<'a> Shape for Poly<'a> {
+impl Shape for Poly {
     fn get_bbox(&self) -> BoundingBox {
         let min = Vec3::init(
             self.x.0[0].min(self.y.0[0].min(self.z.0[0])),
@@ -212,9 +255,9 @@ impl<'a> Shape for Poly<'a> {
     }
 
     fn get_material(&self) -> Material {
-        match self.x.2 {
-            Some(material) => material.clone(),
-            None => panic!("PolyIndex not associated with a material")
+        match &self.x.2 {
+            &Some(ref material) => material.deref().clone(),
+            &None => panic!("PolyIndex not associated with a material")
         }
     }
 
@@ -231,8 +274,8 @@ impl<'a> Shape for Poly<'a> {
     }
 
     fn diffuse_color(&self, point: Vec3) -> Color {
-        match (self.x.2, self.y.2, self.z.2) {
-            (Some(_), Some(_), Some(_)) => self.interpolated_color(point),
+        match (&self.x.2, &self.y.2, &self.z.2) {
+            (&Some(_), &Some(_), &Some(_)) => self.interpolated_color(point),
             _ => self.get_material().diffuse
         }
     }
@@ -243,10 +286,10 @@ mod tests {
     use vec::Vec3;
     use ray::Ray;
     use scene::shapes::ShapeIntersection;
-    use scene::shapes::poly_mesh::{Poly, Mesh};
+    use scene::shapes::poly_mesh::{RawMesh, Mesh};
 
-    fn create_mesh() -> Mesh {
-        let mut m = Mesh::new();
+    fn create_mesh<'a>() -> Mesh {
+        let mut m = RawMesh::new();
         m.vertices = vec!(
             Vec3::init(0.0, 0.0, 0.0), Vec3::init(2.0, 0.0, 0.0), Vec3::init(0.0, 2.0, 0.0),
             Vec3::init(0.0, 0.0, -2.0), Vec3::init(4.0, 0.0, -2.0), Vec3::init(0.0, 4.0, -2.0),
@@ -259,17 +302,17 @@ mod tests {
             ((6, None, None), (7, None, None), (8, None, None)),
             ((9, None, None), (10, None, None), (11, None, None))
         );
-        m
+        Mesh::build(m)
     }
 
     #[test]
     fn create_poly_from_polymesh() {
         let mesh = create_mesh();
-        let p: Poly = mesh.get_poly(0);
+        let ref p = mesh.polys[0];
 
-        assert_eq!(&mesh.vertices[0], p.x.0);
-        assert_eq!(&mesh.vertices[1], p.y.0);
-        assert_eq!(&mesh.vertices[2], p.z.0);
+        assert_eq!(mesh.vertices[0], p.x.0);
+        assert_eq!(mesh.vertices[1], p.y.0);
+        assert_eq!(mesh.vertices[2], p.z.0);
     }
 
     #[test]
@@ -278,8 +321,11 @@ mod tests {
 
         let ray = Ray::init(Vec3::init(-1.5, 1.0, 1.0), Vec3::init(1.0, 0.0, -1.0));
         match mesh.intersects(&ray) {
-            ShapeIntersection::Hit(x) => assert_eq!(x, 2.0),
-            ShapeIntersection::Missed => panic!("Missed mesh")
+            (ShapeIntersection::Hit(pt), i) => {
+                assert_eq!(pt, 2.0);
+                assert_eq!(i, 2)
+            },
+            (ShapeIntersection::Missed, _) => panic!("Missed mesh")
         }
 
     }
