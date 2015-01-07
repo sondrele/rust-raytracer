@@ -20,27 +20,9 @@ type MaterialIndex = uint;
 type VertexIndex = (PointIndex, Option<NormalIndex>, Option<MaterialIndex>);
 
 // The Index-type stored in the RawMesh. These area used to generate a Poly
-type PolyIndex = (VertexIndex, VertexIndex, VertexIndex);
+pub type PolyIndex = (VertexIndex, VertexIndex, VertexIndex);
 
 pub type PolyVertex = (Rc<Vec3>, Option<Rc<Vec3>>, Option<Rc<Material>>);
-
-pub struct RawMesh {
-    pub vertices: Vec<Vec3>,
-    pub normals: Vec<Vec3>,
-    pub materials: Vec<Material>,
-    poly_indices: Vec<PolyIndex>
-}
-
-impl RawMesh {
-    pub fn new() -> RawMesh {
-        RawMesh {
-            vertices: Vec::new(),
-            normals: Vec::new(),
-            materials: Vec::new(),
-            poly_indices: Vec::new()
-        }
-    }
-}
 
 #[derive(Clone, PartialEq, Show)]
 pub struct Poly {
@@ -57,7 +39,7 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    fn new() -> Mesh {
+    pub fn new() -> Mesh {
         Mesh {
             vertices: Vec::new(),
             normals: Vec::new(),
@@ -66,58 +48,43 @@ impl Mesh {
         }
     }
 
-    pub fn build(mesh: RawMesh) -> Mesh {
-        let mut m = Mesh::new();
-        for v in mesh.vertices.iter() {
-            m.vertices.push(Rc::new(v.clone()))
-        }
+    pub fn build_polys(&mut self, poly_indices: Vec<PolyIndex>) {
+        self.polys = Vec::new();
 
-        for n in mesh.normals.iter() {
-            m.normals.push(Rc::new(n.clone()))
-        }
-
-        for mtl in mesh.materials.iter() {
-            m.materials.push(Rc::new(mtl.clone()))
-        }
-
-        for p in mesh.poly_indices.iter() {
+        for p in poly_indices.iter() {
             let poly = match p {
                 &((xv, Some(xn), Some(xm)), (yv, Some(yn), Some(ym)), (zv, Some(zn), Some(zm))) => {
                     Poly {
-                        x: (m.vertices[xv].clone(), Some(m.normals[xn].clone()), Some(m.materials[xm].clone())),
-                        y: (m.vertices[yv].clone(), Some(m.normals[yn].clone()), Some(m.materials[ym].clone())),
-                        z: (m.vertices[zv].clone(), Some(m.normals[zn].clone()), Some(m.materials[zm].clone()))
+                        x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()), Some(self.materials[xm].clone())),
+                        y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()), Some(self.materials[ym].clone())),
+                        z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()), Some(self.materials[zm].clone()))
                     }
                 },
                 &((xv, Some(xn), None), (yv, Some(yn), None), (zv, Some(zn), None)) => {
                     Poly {
-                        x: (m.vertices[xv].clone(), Some(m.normals[xn].clone()), None),
-                        y: (m.vertices[yv].clone(), Some(m.normals[yn].clone()), None),
-                        z: (m.vertices[zv].clone(), Some(m.normals[zn].clone()), None)
+                        x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()), None),
+                        y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()), None),
+                        z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()), None)
                     }
                 },
                 &((xv, None, Some(xm)), (yv, None, Some(ym)), (zv, None, Some(zm))) => {
                     Poly {
-                        x: (m.vertices[xv].clone(), None, Some(m.materials[xm].clone())),
-                        y: (m.vertices[yv].clone(), None, Some(m.materials[ym].clone())),
-                        z: (m.vertices[zv].clone(), None, Some(m.materials[zm].clone()))
+                        x: (self.vertices[xv].clone(), None, Some(self.materials[xm].clone())),
+                        y: (self.vertices[yv].clone(), None, Some(self.materials[ym].clone())),
+                        z: (self.vertices[zv].clone(), None, Some(self.materials[zm].clone()))
                     }
                 },
                 &((xv, None, None), (yv, None, None), (zv, None, None)) => {
                     Poly {
-                        x: (m.vertices[xv].clone(), None, None),
-                        y: (m.vertices[yv].clone(), None, None),
-                        z: (m.vertices[zv].clone(), None, None)
+                        x: (self.vertices[xv].clone(), None, None),
+                        y: (self.vertices[yv].clone(), None, None),
+                        z: (self.vertices[zv].clone(), None, None)
                     }
                 },
                 _ => panic!("Invalid PolyIndex")
             };
-            m.polys.push(poly);
+            self.polys.push(poly);
         }
-        // for i in range(0, m.mesh.poly_indices.len()) {
-        //     m.polys.push(Rc::new(m.mesh.get_poly(i)))
-        // }
-        m
     }
 
     pub fn intersects(&self, ray: &Ray) -> (ShapeIntersection, uint) {
@@ -283,26 +250,27 @@ impl Shape for Poly {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
     use vec::Vec3;
     use ray::Ray;
     use scene::shapes::ShapeIntersection;
-    use scene::shapes::poly_mesh::{RawMesh, Mesh};
+    use scene::shapes::poly_mesh::Mesh;
 
     fn create_mesh<'a>() -> Mesh {
-        let mut m = RawMesh::new();
+        let mut m = Mesh::new();
         m.vertices = vec!(
-            Vec3::init(0.0, 0.0, 0.0), Vec3::init(2.0, 0.0, 0.0), Vec3::init(0.0, 2.0, 0.0),
-            Vec3::init(0.0, 0.0, -2.0), Vec3::init(4.0, 0.0, -2.0), Vec3::init(0.0, 4.0, -2.0),
-            Vec3::init(0.0, 0.0, -1.0), Vec3::init(2.0, 0.0, -1.0), Vec3::init(0.0, 2.0, -1.0),
-            Vec3::init(0.0, 0.0, -3.0), Vec3::init(6.0, 0.0, -3.0), Vec3::init(0.0, 6.0, -3.0)
+            Rc::new(Vec3::init(0.0, 0.0, 0.0)), Rc::new(Vec3::init(2.0, 0.0, 0.0)), Rc::new(Vec3::init(0.0, 2.0, 0.0)),
+            Rc::new(Vec3::init(0.0, 0.0, -2.0)), Rc::new(Vec3::init(4.0, 0.0, -2.0)), Rc::new(Vec3::init(0.0, 4.0, -2.0)),
+            Rc::new(Vec3::init(0.0, 0.0, -1.0)), Rc::new(Vec3::init(2.0, 0.0, -1.0)), Rc::new(Vec3::init(0.0, 2.0, -1.0)),
+            Rc::new(Vec3::init(0.0, 0.0, -3.0)), Rc::new(Vec3::init(6.0, 0.0, -3.0)), Rc::new(Vec3::init(0.0, 6.0, -3.0))
         );
-        m.poly_indices = vec!(
+        m.build_polys(vec!(
             ((0, None, None), (1, None, None), (2, None, None)),
             ((3, None, None), (4, None, None), (5, None, None)),
             ((6, None, None), (7, None, None), (8, None, None)),
             ((9, None, None), (10, None, None), (11, None, None))
-        );
-        Mesh::build(m)
+        ));
+        m
     }
 
     #[test]
