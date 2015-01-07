@@ -24,7 +24,22 @@ type VertexIndex = (PointIndex, Option<NormalIndex>, Option<MaterialIndex>);
 // The Index-type stored in the RawMesh. These area used to generate a Poly
 pub type PolyIndex = (VertexIndex, VertexIndex, VertexIndex);
 
-pub type PolyVertex = (Rc<Vec3>, Option<Rc<Vec3>>, Option<Rc<Material>>);
+#[derive(Clone, PartialEq, Show)]
+pub struct PolyVertex {
+    pub position: Rc<Vec3>,
+    pub normal: Option<Rc<Vec3>>,
+    pub material: Rc<Material>
+}
+
+impl PolyVertex {
+    fn init(position: Rc<Vec3>, normal: Option<Rc<Vec3>>, material: Rc<Material>) -> PolyVertex {
+        PolyVertex {
+            position: position,
+            normal: normal,
+            material: material
+        }
+    }
+}
 
 #[derive(Clone, PartialEq, Show)]
 pub struct Poly {
@@ -77,39 +92,77 @@ impl Mesh {
             let poly = match p {
                 &((xv, Some(xn), Some(xm)), (yv, Some(yn), Some(ym)), (zv, Some(zn), Some(zm))) => {
                     MeshPoly(Poly {
-                        x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()),
-                            Some(self.materials[xm].clone())),
-                        y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()),
-                            Some(self.materials[ym].clone())),
-                        z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()),
-                            Some(self.materials[zm].clone()))
+                        x: PolyVertex::init(
+                            self.vertices[xv].clone(),
+                            Some(self.normals[xn].clone()),
+                            self.materials[xm].clone()
+                        ),
+                        y: PolyVertex::init(
+                            self.vertices[yv].clone(),
+                            Some(self.normals[yn].clone()),
+                            self.materials[ym].clone()
+                        ),
+                        z: PolyVertex::init(
+                            self.vertices[zv].clone(),
+                            Some(self.normals[zn].clone()),
+                            self.materials[zm].clone()
+                        )
                     })
                 },
                 &((xv, Some(xn), None), (yv, Some(yn), None), (zv, Some(zn), None)) => {
                     MeshPoly(Poly {
-                        x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()),
-                            Some(self.materials[0].clone())),
-                        y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()),
-                            Some(self.materials[0].clone())),
-                        z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()),
-                            Some(self.materials[0].clone()))
+                        x: PolyVertex::init(
+                            self.vertices[xv].clone(),
+                            Some(self.normals[xn].clone()),
+                            self.materials[0].clone()),
+                        y: PolyVertex::init(
+                            self.vertices[yv].clone(),
+                            Some(self.normals[yn].clone()),
+                            self.materials[0].clone()
+                        ),
+                        z: PolyVertex::init(
+                            self.vertices[zv].clone(),
+                            Some(self.normals[zn].clone()),
+                            self.materials[0].clone()
+                        )
                     })
                 },
                 &((xv, None, Some(xm)), (yv, None, Some(ym)), (zv, None, Some(zm))) => {
                     MeshPoly(Poly {
-                        x: (self.vertices[xv].clone(), None, Some(self.materials[xm].clone())),
-                        y: (self.vertices[yv].clone(), None, Some(self.materials[ym].clone())),
-                        z: (self.vertices[zv].clone(), None, Some(self.materials[zm].clone()))
+                        x: PolyVertex::init(
+                            self.vertices[xv].clone(),
+                            None,
+                            self.materials[xm].clone()
+                        ),
+                        y: PolyVertex::init(
+                            self.vertices[yv].clone(),
+                            None,
+                            self.materials[ym].clone()
+                        ),
+                        z: PolyVertex::init(
+                            self.vertices[zv].clone(),
+                            None,
+                            self.materials[zm].clone()
+                        )
                     })
                 },
                 &((xv, None, None), (yv, None, None), (zv, None, None)) => {
                     MeshPoly(Poly {
-                        x: (self.vertices[xv].clone(), None,
-                            Some(self.materials[0].clone())),
-                        y: (self.vertices[yv].clone(), None,
-                            Some(self.materials[0].clone())),
-                        z: (self.vertices[zv].clone(), None,
-                            Some(self.materials[0].clone()))
+                        x: PolyVertex::init(
+                            self.vertices[xv].clone(),
+                            None,
+                            self.materials[0].clone()
+                        ),
+                        y: PolyVertex::init(
+                            self.vertices[yv].clone(),
+                            None,
+                            self.materials[0].clone()
+                        ),
+                        z: PolyVertex::init(
+                            self.vertices[zv].clone(),
+                            None,
+                            self.materials[0].clone()
+                        )
                     })
                 },
                 _ => panic!("Invalid PolyIndex: {}", p)
@@ -158,10 +211,10 @@ impl Index<uint> for Mesh {
 
 impl Poly {
     fn weighted_areas(&self, point: Vec3) -> (f32, f32, f32) {
-        let area = Vec3::get_area(*self.x.0, *self.y.0, *self.z.0);
-        let area0 = Vec3::get_area(*self.x.0, *self.y.0, point) / area;
-        let area1 = Vec3::get_area(*self.z.0, *self.x.0, point) / area;
-        let area2 = Vec3::get_area(*self.y.0, *self.z.0, point) / area;
+        let area = Vec3::get_area(*self.x.position, *self.y.position, *self.z.position);
+        let area0 = Vec3::get_area(*self.x.position, *self.y.position, point) / area;
+        let area1 = Vec3::get_area(*self.z.position, *self.x.position, point) / area;
+        let area2 = Vec3::get_area(*self.y.position, *self.z.position, point) / area;
 
         if area0 > 1.0 || area1 > 1.0 || area2 > 1.0 {
             panic!("Cannot get area, as point is outside of poly")
@@ -171,24 +224,19 @@ impl Poly {
     }
 
     fn interpolated_color(&self, point: Vec3) -> Color {
-        match (&self.x.2, &self.y.2, &self.z.2) {
-            (&Some(ref idx_x), &Some(ref idx_y), &Some(ref idx_z)) => {
-                let (area0, area1, area2) = self.weighted_areas(point);
-                idx_x.diffuse.mult(area2) + idx_y.diffuse.mult(area1)
-                    + idx_z.diffuse.mult(area0)
-            },
-            _ => panic!("Not enough pointers to materials")
-        }
+        let (area0, area1, area2) = self.weighted_areas(point);
+        self.x.material.diffuse.mult(area2) + self.y.material.diffuse.mult(area1)
+            + self.z.material.diffuse.mult(area0)
     }
 
     fn static_normal(&self) -> Vec3 {
-        let v = *self.y.0 - *self.x.0;
-        let w = *self.z.0 - *self.x.0;
+        let v = *self.y.position - *self.x.position;
+        let w = *self.z.position - *self.x.position;
         v.cross(w)
     }
 
     fn interpolated_normal(&self, point: Vec3) -> Vec3 {
-        match (&self.x.1, &self.y.1, &self.z.1) {
+        match (&self.x.normal, &self.y.normal, &self.z.normal) {
             (&Some(ref norm_x), &Some(ref norm_y), &Some(ref norm_z)) => {
                 let (area0, area1, area2) = self.weighted_areas(point);
                 norm_x.mult(area2) + norm_y.mult(area1) + norm_z.mult(area0)
@@ -201,15 +249,15 @@ impl Poly {
 impl Shape for Poly {
     fn get_bbox(&self) -> BoundingBox {
         let min = Vec3::init(
-            self.x.0[0].min(self.y.0[0].min(self.z.0[0])),
-            self.x.0[1].min(self.y.0[1].min(self.z.0[1])),
-            self.x.0[2].min(self.y.0[2].min(self.z.0[2]))
+            self.x.position[0].min(self.y.position[0].min(self.z.position[0])),
+            self.x.position[1].min(self.y.position[1].min(self.z.position[1])),
+            self.x.position[2].min(self.y.position[2].min(self.z.position[2]))
         );
 
         let max = Vec3::init(
-            self.x.0[0].max(self.y.0[0].max(self.z.0[0])),
-            self.x.0[1].max(self.y.0[1].max(self.z.0[1])),
-            self.x.0[2].max(self.y.0[2].max(self.z.0[2]))
+            self.x.position[0].max(self.y.position[0].max(self.z.position[0])),
+            self.x.position[1].max(self.y.position[1].max(self.z.position[1])),
+            self.x.position[2].max(self.y.position[2].max(self.z.position[2]))
         );
 
         BoundingBox::init(min, max)
@@ -218,9 +266,9 @@ impl Shape for Poly {
     fn intersects(&self, ray: &Ray) -> ShapeIntersection {
         let p: Vec3 = ray.ori;
         let d: Vec3 = ray.dir;
-        let v0: Vec3 = *self.x.0;
-        let v1: Vec3 = *self.y.0;
-        let v2: Vec3 = *self.z.0;
+        let v0: Vec3 = *self.x.position;
+        let v1: Vec3 = *self.y.position;
+        let v2: Vec3 = *self.z.position;
 
         let e1: Vec3 = v1 - v0;
         let e2: Vec3 = v2 - v0;
@@ -259,14 +307,11 @@ impl Shape for Poly {
     }
 
     fn get_material(&self) -> Material {
-        match &self.x.2 {
-            &Some(ref material) => material.deref().clone(),
-            &None => panic!("PolyIndex not associated with a material")
-        }
+        self.x.material.deref().clone()
     }
 
     fn surface_normal(&self, direction: Vec3, point: Vec3) -> Vec3 {
-        let mut normal = match self.x.1 != None {
+        let mut normal = match self.x.normal.is_some() {
             true => self.interpolated_normal(point),
             false => self.static_normal()
         };
@@ -279,10 +324,7 @@ impl Shape for Poly {
     }
 
     fn diffuse_color(&self, point: Vec3) -> Color {
-        match (&self.x.2, &self.y.2, &self.z.2) {
-            (&Some(_), &Some(_), &Some(_)) => self.interpolated_color(point),
-            _ => self.get_material().diffuse
-        }
+        self.interpolated_color(point)
     }
 }
 
@@ -326,9 +368,9 @@ mod tests {
         let mesh = create_mesh();
         let ref p = mesh[0];
 
-        assert_eq!(mesh.vertices[0], p.x.0);
-        assert_eq!(mesh.vertices[1], p.y.0);
-        assert_eq!(mesh.vertices[2], p.z.0);
+        assert_eq!(mesh.vertices[0], p.x.position);
+        assert_eq!(mesh.vertices[1], p.y.position);
+        assert_eq!(mesh.vertices[2], p.z.position);
     }
 
     #[test]
