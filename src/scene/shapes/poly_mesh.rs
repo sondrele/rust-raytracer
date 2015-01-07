@@ -1,11 +1,13 @@
 use std::rc::Rc;
 use std::ops::Deref;
 use std::num::FloatMath;
+use std::ops::Index;
 
 use vec::Vec3;
 use ray::Ray;
 use scene::material::{Material, Color};
-use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
+use scene::shapes::{BoundingBox, Primitive, Shape, ShapeIntersection};
+use scene::shapes::Primitive::MeshPoly;
 
 // Index into the 'vertices' Vec in RawMesh
 type PointIndex = uint;
@@ -36,7 +38,7 @@ pub struct Mesh {
     pub vertices: Vec<Rc<Vec3>>,
     pub normals: Vec<Rc<Vec3>>,
     pub materials: Vec<Rc<Material>>,
-    pub polys: Vec<Poly>
+    pub polys: Vec<Primitive>
 }
 
 impl Mesh {
@@ -74,35 +76,41 @@ impl Mesh {
         for p in poly_indices.iter() {
             let poly = match p {
                 &((xv, Some(xn), Some(xm)), (yv, Some(yn), Some(ym)), (zv, Some(zn), Some(zm))) => {
-                    Poly {
+                    MeshPoly(Poly {
                         x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()),
                             Some(self.materials[xm].clone())),
                         y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()),
                             Some(self.materials[ym].clone())),
                         z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()),
                             Some(self.materials[zm].clone()))
-                    }
+                    })
                 },
                 &((xv, Some(xn), None), (yv, Some(yn), None), (zv, Some(zn), None)) => {
-                    Poly {
-                        x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()), None),
-                        y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()), None),
-                        z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()), None)
-                    }
+                    MeshPoly(Poly {
+                        x: (self.vertices[xv].clone(), Some(self.normals[xn].clone()),
+                            Some(self.materials[0].clone())),
+                        y: (self.vertices[yv].clone(), Some(self.normals[yn].clone()),
+                            Some(self.materials[0].clone())),
+                        z: (self.vertices[zv].clone(), Some(self.normals[zn].clone()),
+                            Some(self.materials[0].clone()))
+                    })
                 },
                 &((xv, None, Some(xm)), (yv, None, Some(ym)), (zv, None, Some(zm))) => {
-                    Poly {
+                    MeshPoly(Poly {
                         x: (self.vertices[xv].clone(), None, Some(self.materials[xm].clone())),
                         y: (self.vertices[yv].clone(), None, Some(self.materials[ym].clone())),
                         z: (self.vertices[zv].clone(), None, Some(self.materials[zm].clone()))
-                    }
+                    })
                 },
                 &((xv, None, None), (yv, None, None), (zv, None, None)) => {
-                    Poly {
-                        x: (self.vertices[xv].clone(), None, None),
-                        y: (self.vertices[yv].clone(), None, None),
-                        z: (self.vertices[zv].clone(), None, None)
-                    }
+                    MeshPoly(Poly {
+                        x: (self.vertices[xv].clone(), None,
+                            Some(self.materials[0].clone())),
+                        y: (self.vertices[yv].clone(), None,
+                            Some(self.materials[0].clone())),
+                        z: (self.vertices[zv].clone(), None,
+                            Some(self.materials[0].clone()))
+                    })
                 },
                 _ => panic!("Invalid PolyIndex: {}", p)
             };
@@ -137,8 +145,18 @@ impl Mesh {
     }
 }
 
-impl Poly {
+impl Index<uint> for Mesh {
+    type Output = Poly;
 
+    fn index<'a>(&'a self, index: &uint) -> &'a Poly {
+        match self.polys[*index] {
+            MeshPoly(ref p) => p,
+            _ => panic!("Mesh should not contain other primitives than MeshPoly")
+        }
+    }
+}
+
+impl Poly {
     fn weighted_areas(&self, point: Vec3) -> (f32, f32, f32) {
         let area = Vec3::get_area(*self.x.0, *self.y.0, *self.z.0);
         let area0 = Vec3::get_area(*self.x.0, *self.y.0, point) / area;
@@ -166,18 +184,14 @@ impl Poly {
     fn static_normal(&self) -> Vec3 {
         let v = *self.y.0 - *self.x.0;
         let w = *self.z.0 - *self.x.0;
-        let mut norm = v.cross(w);
-        norm.normalize();
-        norm
+        v.cross(w)
     }
 
     fn interpolated_normal(&self, point: Vec3) -> Vec3 {
         match (&self.x.1, &self.y.1, &self.z.1) {
             (&Some(ref norm_x), &Some(ref norm_y), &Some(ref norm_z)) => {
                 let (area0, area1, area2) = self.weighted_areas(point);
-                let mut norm = norm_x.mult(area2) + norm_y.mult(area1) + norm_z.mult(area0);
-                norm.normalize();
-                norm
+                norm_x.mult(area2) + norm_y.mult(area1) + norm_z.mult(area0)
             },
             _ => panic!("Not enough pointers to materials")
         }
@@ -256,6 +270,7 @@ impl Shape for Poly {
             true => self.interpolated_normal(point),
             false => self.static_normal()
         };
+        normal.normalize();
 
         if normal.dot(direction) > 0.0 {
             normal = normal.invert();
@@ -276,11 +291,13 @@ mod tests {
     use std::rc::Rc;
     use vec::Vec3;
     use ray::Ray;
+    use scene::material::Material;
     use scene::shapes::ShapeIntersection;
     use scene::shapes::poly_mesh::Mesh;
 
     fn create_mesh<'a>() -> Mesh {
         let mut m = Mesh::new();
+        m.materials.push(Rc::new(Material::new()));
         m.vertices = vec!(
             Rc::new(Vec3::init(0.0, 0.0, 0.0)),
             Rc::new(Vec3::init(2.0, 0.0, 0.0)),
@@ -307,7 +324,7 @@ mod tests {
     #[test]
     fn create_poly_from_polymesh() {
         let mesh = create_mesh();
-        let ref p = mesh.polys[0];
+        let ref p = mesh[0];
 
         assert_eq!(mesh.vertices[0], p.x.0);
         assert_eq!(mesh.vertices[1], p.y.0);

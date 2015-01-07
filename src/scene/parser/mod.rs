@@ -3,7 +3,7 @@ use std::io::{BufferedReader, File};
 use std::str::FromStr;
 
 use vec::Vec3;
-use scene::{BvhScene, Scene, Camera, Light, PointLight, AreaLight, DirectionalLight};
+use scene::{BvhScene, MeshScene, Scene, Camera, Light, PointLight, AreaLight, DirectionalLight};
 use scene::material::{Material, Color};
 use scene::shapes::{sphere, poly};
 use scene::shapes::poly_mesh::{Mesh, PolyIndex};
@@ -456,6 +456,32 @@ impl SceneParser {
     pub fn parse_bvh_scene<'a>(&mut self) -> BvhScene<'a> {
         let scene = self.parse_scene();
         BvhScene::from_scene(scene)
+    }
+
+    pub fn parse_mesh_scene(&mut self) -> MeshScene {
+        self.check_and_consume("Composer");
+        self.check_and_consume("format");
+        self.check_and_consume("2.1");
+        self.check_and_consume("ascii");
+
+        let mut scene = MeshScene::new();
+
+        let mut tkn = self.peak();
+        while self.has_next_token() {
+            match tkn.as_slice() {
+                "camera" => scene.camera = self.parse_camera(),
+                "sphere" => {
+                    let _ = self.parse_sphere();
+                },
+                "poly_set" => {
+                    scene.mesh = self.parse_mesh();
+                },
+                token if token.ends_with("light") => scene.lights.push(self.parse_light()),
+                _ => panic!("Unexpected token: {}", tkn)
+            }
+            tkn = self.peak();
+        }
+        scene
     }
 }
 

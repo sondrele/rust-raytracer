@@ -214,5 +214,59 @@ fn can_parse_scene() {
 fn can_parse_mesh() {
     let mut parser = scene_parser("per-vertex-polyset");
     let mesh = parser.parse_mesh();
+    assert_eq!(mesh.vertices.len(), 9);
+    assert_eq!(mesh.normals.len(), 9);
+    assert_eq!(mesh.materials.len(), 6);
     assert_eq!(mesh.polys.len(), 3);
+
+    let ref poly0 = mesh[0];
+    match poly0.x.1 {
+        Some(ref n) => assert_eq!(n, &mesh.normals[0]), None => panic!("Should have normal")
+    }
+    match poly0.x.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[0]), None => panic!("Should have material")
+    }
+    match poly0.y.1 {
+        Some(ref n) => assert_eq!(n, &mesh.normals[1]), None => panic!("Should have normal")
+    }
+    match poly0.y.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[1]), None => panic!("Should have material")
+    }
+    match poly0.z.1 {
+        Some(ref n) => assert_eq!(n, &mesh.normals[2]), None => panic!("Should have normal")
+    }
+    match poly0.z.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[2]), None => panic!("Should have material")
+    }
+
+    let ref poly1 = mesh[1];
+    match poly1.x.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[3]), None => panic!("Should have material")
+    }
+    match poly1.y.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[3]), None => panic!("Should have material")
+    }
+    match poly1.z.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[4]), None => panic!("Should have material")
+    }
+
+    let ref poly2 = mesh[2];
+    match poly2.x.1 {
+        Some(ref n) => assert_eq!(n, &mesh.normals[6]), None => panic!("Should have normal")
+    }
+    match poly2.x.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[5]), None => panic!("Should have material")
+    }
+    match poly2.y.1 {
+        Some(ref n) => assert_eq!(n, &mesh.normals[7]), None => panic!("Should have normal")
+    }
+    match poly2.y.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[4]), None => panic!("Should have material")
+    }
+    match poly2.z.1 {
+        Some(ref n) => assert_eq!(n, &mesh.normals[8]), None => panic!("Should have normal")
+    }
+    match poly2.z.2 {
+        Some(ref m) => assert_eq!(m, &mesh.materials[5]), None => panic!("Should have material")
+    }
 }

@@ -46,6 +46,7 @@ fn main() {
     let opts = [
         optflag("h", "help", "Print this help menu"),
         optflag("b", "bvh", "Optimize scene intersection with BVH-tree"),
+        optflag("m", "mesh", "Parse mesh"),
         optopt("s", "size", "The width and height of the image to be generated", "-s 500"),
         optopt("a", "arealight-samples", "The number of times to sample the area lights", "-a 1000"),
         optopt("d", "depth", "The depth of the recursion in the main loop", "-d 10"),
@@ -67,6 +68,8 @@ fn main() {
     let mut parser = SceneParser::new(scene);
     let scene: Box<IntersectableScene> = if matches.opt_present("b") {
         box parser.parse_bvh_scene()
+    } else if matches.opt_present("m") {
+        box parser.parse_mesh_scene()
     } else {
         box parser.parse_scene()
     };

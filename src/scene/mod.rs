@@ -245,6 +245,41 @@ impl<'a> IntersectableScene<'a> for BvhScene<'a> {
     }
 }
 
+pub struct MeshScene {
+    pub camera: Camera,
+    pub lights: Vec<Light>,
+    pub mesh: shapes::poly_mesh::Mesh
+}
+
+impl MeshScene {
+    pub fn new() -> MeshScene {
+        MeshScene {
+            camera: Camera::new(),
+            lights: Vec::new(),
+            mesh: shapes::poly_mesh::Mesh::new()
+        }
+    }
+}
+
+impl<'a> IntersectableScene<'a> for MeshScene {
+    fn get_camera(&self) -> &Camera {
+        &self.camera
+    }
+
+    fn get_lights(&self) -> &[Light] {
+        self.lights.as_slice()
+    }
+
+    fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {
+        let (intersection, index) = self.mesh.intersects(ray);
+        match intersection {
+            ShapeIntersection::Hit(point) =>
+                Intersected(Intersection::new(point, ray.clone(), &self.mesh.polys[index])),
+            ShapeIntersection::Missed => Missed
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use vec::Vec3;

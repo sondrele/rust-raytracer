@@ -6,7 +6,7 @@ use std::ops::Add;
 use vec::Vec3;
 use ray::Ray;
 use scene::material::{Material, Color};
-use self::Primitive::{Sphere, Poly};
+use self::Primitive::{MeshPoly, Poly, Sphere};
 
 pub mod sphere;
 pub mod poly;
@@ -131,6 +131,7 @@ pub trait Shape {
 
 #[derive(Clone, PartialEq, Show)]
 pub enum Primitive {
+    MeshPoly(poly_mesh::Poly),
     Poly(poly::Poly),
     Sphere(sphere::Sphere)
 }
@@ -138,36 +139,42 @@ pub enum Primitive {
 impl Shape for Primitive {
     fn get_bbox(&self) -> BoundingBox {
         match self {
+            &MeshPoly(ref poly) => poly.get_bbox(),
             &Poly(ref poly) => poly.get_bbox(),
-            &Sphere(ref sphere) => sphere.get_bbox(),
+            &Sphere(ref sphere) => sphere.get_bbox()
         }
     }
 
     fn intersects(&self, ray: &Ray) -> ShapeIntersection {
         match self {
+            &MeshPoly(ref poly) => poly.intersects(ray),
             &Poly(ref poly) => poly.intersects(ray),
-            &Sphere(ref sphere) => sphere.intersects(ray),
+            &Sphere(ref sphere) => sphere.intersects(ray)
         }
     }
 
     fn surface_normal(&self, direction: Vec3, point: Vec3) -> Vec3 {
         match self {
+            &MeshPoly(ref poly) => poly.surface_normal(direction, point),
             &Poly(ref poly) => poly.surface_normal(direction, point),
-            &Sphere(ref sphere) => sphere.surface_normal(direction, point),
+            &Sphere(ref sphere) => sphere.surface_normal(direction, point)
         }
     }
 
     fn get_material(&self) -> Material {
         match self {
+            &MeshPoly(ref poly) => poly.get_material(),
             &Poly(ref poly) => poly.get_material(),
-            &Sphere(ref sphere) => sphere.get_material(),
+            &Sphere(ref sphere) => sphere.get_material()
+
         }
     }
 
     fn diffuse_color(&self, point: Vec3) -> Color {
         match self {
+            &MeshPoly(ref poly) => poly.diffuse_color(point),
             &Poly(ref poly) => poly.diffuse_color(point),
-            &Sphere(_) => self.get_material().diffuse,
+            &Sphere(_) => self.get_material().diffuse
         }
     }
 }
