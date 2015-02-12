@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::num::Float;
 use std::ops::{Add, Sub, Mul, Index};
 
-#[derive(Clone, Copy, Show)]
+#[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
     pub x: f32,
     pub y: f32,

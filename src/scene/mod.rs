@@ -1,6 +1,5 @@
 use std::rand::{random, Open01};
 use std::num::Float;
-use std::num::FloatMath;
 
 use vec::Vec3;
 use ray::Ray;
@@ -17,7 +16,7 @@ pub mod shapes;
 pub mod intersection;
 pub mod bvh;
 
-#[derive(Copy, PartialEq, Clone, Show)]
+#[derive(Copy, PartialEq, Clone, Debug)]
 pub enum Light {
     Point(PointLight),
     Area(AreaLight),
@@ -60,7 +59,7 @@ impl Light {
     }
 }
 
-#[derive(Copy, PartialEq, Clone, Show)]
+#[derive(Copy, PartialEq, Clone, Debug)]
 pub struct PointLight {
     pub pos: Vec3,
     pub intensity: Color
@@ -75,7 +74,7 @@ impl PointLight {
     }
 }
 
-#[derive(Copy, PartialEq, Clone, Show)]
+#[derive(Copy, PartialEq, Clone, Debug)]
 pub struct AreaLight {
     pub min: Vec3,
     pub max: Vec3,
@@ -105,7 +104,7 @@ impl AreaLight {
     }
 }
 
-#[derive(Copy, PartialEq, Clone, Show)]
+#[derive(Copy, PartialEq, Clone, Debug)]
 pub struct DirectionalLight {
     pub dir: Vec3,
     pub intensity: Color

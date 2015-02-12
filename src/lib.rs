@@ -1,9 +1,6 @@
-#![feature(associated_types)]
-
 extern crate bmp;
 
 use std::num::Float;
-use std::num::FloatMath;
 
 use bmp::Image;
 
@@ -21,10 +18,10 @@ pub mod scene;
 static SCALE: f32 = 10000.0;
 
 pub struct RayTracer<'a> {
-    width: uint,
-    height: uint,
-    num_samples: uint,
-    depth: uint,
+    width: u32,
+    height: u32,
+    num_samples: usize,
+    depth: usize,
     center: Vec3,
     camera_pos: Vec3,
     parallel_up: Vec3,
@@ -51,7 +48,7 @@ impl<'a> RayTracer<'a> {
         }
     }
 
-    pub fn init(width: uint, height: uint, depth: uint, num_samples: uint) -> RayTracer<'a> {
+    pub fn init(width: u32, height: u32, depth: usize, num_samples: usize) -> RayTracer<'a> {
         let mut raytracer = RayTracer::new();
         raytracer.width = width;
         raytracer.height = height;
@@ -102,7 +99,7 @@ impl<'a> RayTracer<'a> {
     }
 
     fn shadow_scalar<'b>(scene: &'a Box<IntersectableScene<'a> + 'a>, light: &Light,
-                         intersection: &Intersection, n: uint, depth: uint) -> Color {
+                         intersection: &Intersection, n: usize, depth: usize) -> Color {
         if depth <= 0 {
             return Color::new();
         }
@@ -168,7 +165,7 @@ impl<'a> RayTracer<'a> {
     }
 
     fn direct_lightning(light: &Light, intersection: &Intersection , sj: Color,
-                        fattj: f32, n: uint) -> Color {
+                        fattj: f32, n: usize) -> Color {
         let point: Vec3 = intersection.point();
         let material = intersection.material();
         let kt: f32 = material.transparency;
@@ -198,7 +195,7 @@ impl<'a> RayTracer<'a> {
     }
 
     fn shade_intersection<'b>(scene: &'a Box<IntersectableScene<'a> + 'a>,
-                              intersection: &Intersection, num_samples: uint, depth: uint) -> Color {
+                              intersection: &Intersection, num_samples: usize, depth: usize) -> Color {
         if depth <= 0 {
             return Color::new();
         }
@@ -256,19 +253,17 @@ impl<'a> RayTracer<'a> {
     pub fn trace_rays(&'a self) -> Image {
         match self.scene {
             Some(ref scene) => {
-                let mut img = Image::new(self.width, self.height);
+                let mut img = Image::new(self.width as u32, self.height as u32);
 
-                for y in range(0, self.width as i32) {
-                    for x in range(0, self.height as i32) {
-                        let ray = self.compute_ray(x as f32, y as f32);
-                        match scene.intersects(&ray) {
-                            Intersected(intersection) => {
-                                let color = RayTracer::shade_intersection(scene, &intersection,
-                                    self.num_samples, self.depth);
-                                img.set_pixel(x as uint, y as uint, color.as_pixel());
-                            },
-                            Missed => ()
-                        }
+                for (x, y) in img.coordinates() {
+                    let ray = self.compute_ray(x as f32, (self.height - y - 1) as f32);
+                    match scene.intersects(&ray) {
+                        Intersected(intersection) => {
+                            let color = RayTracer::shade_intersection(scene, &intersection,
+                                self.num_samples, self.depth);
+                            img.set_pixel(x as u32, y as u32, color.as_pixel());
+                        },
+                        Missed => ()
                     }
                 }
                 img
@@ -287,7 +282,7 @@ mod tests {
     use scene::{Scene, Camera};
 
     fn get_raytraer<'a>() -> RayTracer<'a> {
-        let mut scene = box Scene::new();
+        let mut scene = Box::new(Scene::new());
         scene.camera = Camera::new();
         scene.camera.view_dir = Vec3::init(0.0, 0.0, -1.0);
         scene.camera.ortho_up = Vec3::init(0.0, 1.0, 0.0);

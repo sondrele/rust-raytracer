@@ -5,20 +5,20 @@ use scene::shapes::{BoundingBox, Primitive, Shape, ShapeIntersection};
 use self::NodeIntersection::{Hit, Missed};
 
 
-#[derive(PartialEq, Show)]
+#[derive(PartialEq, Debug)]
 pub enum Node<'a> {
     Member(Box<TreeNode<'a>>),
     Leaf(Box<TreeNode<'a>>),
     Empty
 }
 
-#[derive(PartialEq, Show)]
+#[derive(PartialEq, Debug)]
 pub enum NodeIntersection<'a> {
     Hit(&'a Box<TreeNode<'a>>, f32),
     Missed
 }
 
-#[derive(PartialEq, Show)]
+#[derive(PartialEq, Debug)]
 pub struct TreeNode<'a> {
     left: Node<'a>,
     right: Node<'a>,
@@ -85,11 +85,11 @@ impl<'a> Tree<'a> {
         self.root = root;
     }
 
-    fn build(&mut self, shapes: &'a mut [Primitive], depth: uint) -> Node<'a> {
+    fn build(&mut self, shapes: &'a mut [Primitive], depth: usize) -> Node<'a> {
         match shapes.len() {
             0 => Node::Empty,
             1 => {
-                let mut node = box TreeNode::new();
+                let mut node = Box::new(TreeNode::new());
                 node.add(shapes[0].clone());
                 Node::Leaf(node)
             },
@@ -107,7 +107,7 @@ impl<'a> Tree<'a> {
                 let left = self.build(head, depth + 1);
                 let right = self.build(tail, depth + 1);
 
-                Node::Member(box TreeNode::init(left, right))
+                Node::Member(Box::new(TreeNode::init(left, right)))
             }
         }
     }

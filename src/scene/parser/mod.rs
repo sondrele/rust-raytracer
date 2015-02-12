@@ -1,5 +1,5 @@
-use std::io;
-use std::io::{BufferedReader, File};
+use std::old_io as io;
+use std::old_io::{BufferedReader, File};
 use std::str::FromStr;
 
 use vec::Vec3;
@@ -83,8 +83,8 @@ impl SceneParser {
     fn next_num<T:FromStr>(&mut self) -> T {
         let tkn = self.next_token();
         match tkn.as_slice().parse() {
-            Some(f) => f,
-            None => panic!("Token '{}'", tkn)
+            Ok(f) => f,
+            Err(e) => panic!("Could not represent token as num: '{}'", tkn)
         }
     }
 
@@ -239,7 +239,7 @@ impl SceneParser {
         self.consume_next();
         self.check_and_consume("numMaterials");
 
-        let mut num_materials: uint = self.next_num();
+        let mut num_materials: usize = self.next_num();
         let mut materials = Vec::with_capacity(num_materials);
         while num_materials > 0 {
             let material = self.parse_material();
@@ -257,7 +257,7 @@ impl SceneParser {
         self.consume_next(); // TODO: This field is probably never used
         self.check_and_consume("numPolys");
 
-        let mut num_polys: uint = self.next_num();
+        let mut num_polys: usize = self.next_num();
         let mut polyset = Vec::with_capacity(num_polys);
         while num_polys > 0 {
             let mut poly = self.parse_poly(per_vertex_normal, material_binding);
@@ -265,18 +265,18 @@ impl SceneParser {
             match material_binding {
                 true => {
                     let (i0, i1, i2) = (poly[0].mat_index, poly[1].mat_index, poly[2].mat_index);
-                    poly.materials.push(materials[i0 as uint].clone());
+                    poly.materials.push(materials[i0 as usize].clone());
                     poly.vertices[0].mat_index = poly.materials.len() as u32 - 1;
 
                     if i1 != i0 {
-                        poly.materials.push(materials[i1 as uint].clone());
+                        poly.materials.push(materials[i1 as usize].clone());
                         poly.vertices[1].mat_index = poly.materials.len() as u32 - 1;
                     } else {
                         poly.vertices[1].mat_index = 0;
                     }
 
                     if i2 != i1 && i2 != i0 {
-                        poly.materials.push(materials[i2 as uint].clone());
+                        poly.materials.push(materials[i2 as usize].clone());
                         poly.vertices[2].mat_index = poly.materials.len() as u32 - 1;
                     } else if i2 == i1 && i2 != i0 {
                         poly.vertices[2].mat_index = 1;
