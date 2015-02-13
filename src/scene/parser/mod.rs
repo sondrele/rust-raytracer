@@ -84,7 +84,7 @@ impl SceneParser {
         let tkn = self.next_token();
         match tkn.as_slice().parse() {
             Ok(f) => f,
-            Err(e) => panic!("Could not represent token as num: '{}'", tkn)
+            Err(_) => panic!("Could not represent token as num: '{}'", tkn)
         }
     }
 
@@ -329,7 +329,7 @@ impl SceneParser {
                 "poly_set" => {
                     let mut polyset = self.parse_polyset();
 
-                    for _ in range(0, polyset.len()) {
+                    for _ in 0 .. polyset.len() {
                         match polyset.pop() {
                             Some(poly) => scene.primitives.push(Poly(poly)),
                             None => panic!("Incorrect amount of polys in polyset")

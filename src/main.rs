@@ -1,9 +1,9 @@
-#![feature(collections, os)]
+#![feature(collections, env)]
 
 extern crate rstracer;
 extern crate getopts;
 
-use std::os;
+use std::env;
 use std::str::FromStr;
 
 use getopts::{Matches, Options};
@@ -38,7 +38,7 @@ fn get_scene(matches: &Matches, default: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    let args: Vec<String> = os::args();
+    let args: Vec<String> = env::args().collect();
 
     let program = &args[0][];
     let mut opts = Options::new();

@@ -1,4 +1,4 @@
-use std::rand::{random, Open01};
+use rand::{random, Open01};
 use std::num::Float;
 
 use vec::Vec3;
@@ -175,7 +175,7 @@ impl<'a> IntersectableScene<'a> for Scene<'a> {
     }
 
     fn get_lights(&self) -> &[Light] {
-        self.lights.as_slice()
+        &self.lights[]
     }
 
     fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {

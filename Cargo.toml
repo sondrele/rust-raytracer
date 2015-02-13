@@ -10,3 +10,4 @@ opt-level = 2
 [dependencies]
 bmp = "*"
 getopts = "*"
+rand = "*"

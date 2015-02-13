@@ -1,4 +1,7 @@
+#![feature(core, io, path, test)]
+
 extern crate bmp;
+extern crate rand;
 
 use std::num::Float;
 
@@ -107,7 +110,7 @@ impl<'a> RayTracer<'a> {
         let ori = intersection.point() + intersection.surface_normal().mult(0.0001);
 
         let mut shade: f32 = 0.0;
-        for _ in range(0, n) {
+        for _ in 0 .. n {
             let dir = light.get_dir(ori);
             let shadow = Ray::init(ori, dir);
             shade += match scene.intersects(&shadow) {
@@ -176,7 +179,7 @@ impl<'a> RayTracer<'a> {
         let direct_light: Color = (light.intensity() * sj).mult(fattj);
 
         let mut lightning = Color::new();
-        for _ in range(0, n) {
+        for _ in 0 .. n {
             let n = n as f32;
 
             let dir = light.get_dir(point);
