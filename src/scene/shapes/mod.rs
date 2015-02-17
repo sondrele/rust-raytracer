@@ -1,6 +1,6 @@
 use std::mem::swap;
 use std::cmp::Ordering;
-use std::num::FloatMath;
+use std::num::Float;
 use std::ops::Add;
 
 use vec::Vec3;
@@ -16,7 +16,7 @@ pub enum ShapeIntersection<'a> {
     Missed
 }
 
-#[derive(Copy, PartialEq, Show)]
+#[derive(Copy, PartialEq, Debug)]
 pub struct BoundingBox {
     min: Vec3,
     max: Vec3
@@ -128,7 +128,7 @@ pub trait Shape {
     fn diffuse_color(&self, point: Vec3) -> Color;
 }
 
-#[derive(Clone, PartialEq, Show)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Primitive {
     Poly(poly::Poly),
     Sphere(sphere::Sphere)

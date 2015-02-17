@@ -2,7 +2,7 @@ extern crate wavefront_obj;
 
 use std::collections::HashMap;
 use std::borrow::ToOwned;
-use std::io::{BufferedReader, File};
+use std::old_io::{BufferedReader, File};
 
 use self::wavefront_obj::{mtl, obj};
 use vec::Vec3;
@@ -29,7 +29,7 @@ fn parse_mtl(file_name: &str) -> mtl::MtlSet {
     let mtl_string = read_file(file_name.to_owned());
     match mtl::parse(mtl_string) {
         Ok(m) => m,
-        Err(e) => panic!("{}", e)
+        Err(e) => panic!("{:?}", e)
     }
 }
 
@@ -63,7 +63,7 @@ fn parse_obj(file_name: &str) -> obj::ObjSet {
     let obj_string = read_file(file_name.to_owned());
     match obj::parse(obj_string) {
         Ok(o) => o,
-        Err(e) => panic!("{}", e)
+        Err(e) => panic!("{:?}", e)
     }
 }
 
@@ -90,7 +90,7 @@ fn convert_geometry(geometry: &obj::Geometry, object: &obj:: Object,
                     mtls: &HashMap<String, Material>) -> Vec<poly::Poly> {
     let m = match &geometry.material_name {
         &Some(ref name) => mtls.get(name).unwrap(),
-        &None => panic!("No material name associated with Geometry: {}", geometry)
+        &None => panic!("No material name associated with Geometry: {:?}", geometry)
     };
 
     let mut polys = Vec::with_capacity(geometry.shapes.len());
@@ -110,9 +110,9 @@ fn convert_shape(shp: &obj::Shape, object: &obj::Object) -> Option<poly::Poly> {
     match shp {
         &obj::Shape::Triangle(vertex_x, vertex_y, vertex_z) => {
             let mut p = poly::Poly::new();
-            p.vertices[0] = convert_vtindex(vertex_x, object);
-            p.vertices[1] = convert_vtindex(vertex_y, object);
-            p.vertices[2] = convert_vtindex(vertex_z, object);
+            p.vertices[0] = convert_vtnindex(vertex_x, object);
+            p.vertices[1] = convert_vtnindex(vertex_y, object);
+            p.vertices[2] = convert_vtnindex(vertex_z, object);
             if vertex_x.1 != None {
                 p.vertex_normal = true;
             }
@@ -122,7 +122,7 @@ fn convert_shape(shp: &obj::Shape, object: &obj::Object) -> Option<poly::Poly> {
     }
 }
 
-fn convert_vtindex(vt: obj::VTIndex, object: &obj::Object) -> poly::Vertex {
+fn convert_vtnindex(vt: obj::VTNIndex, object: &obj::Object) -> poly::Vertex {
     let mut vertex = poly::Vertex::new();
     vertex.position = convert_vertex(object.vertices[vt.0]);
     match vt.2 {
@@ -139,17 +139,17 @@ fn convert_vertex(v: obj::Vertex) -> Vec3 {
     Vec3::init(v.x as f32, v.y as f32, v.z as f32)
 }
 
-pub fn parse_obj_scene<'a>(scene_path: String, obj_path: String) -> scene::BvhScene<'a> {
-    let objset = parse_obj(obj_path.as_slice());
-    let mtllib = parse_mtl(objset.material_library.as_slice());
+pub fn parse_obj_scene<'a>(parser: &mut SceneParser, obj_path: String) -> scene::BvhScene<'a> {
+    let objset = parse_obj(&obj_path);
+    let mtl_path = "scenes/".to_string() + &objset.material_library[];
+    let mtllib = parse_mtl(&mtl_path[]);
 
     let materials = convert_materials(mtllib);
     let polys = convert_objects(&objset.objects, &materials);
-    let prims = polys.map_in_place(|poly| Primitive::Poly(poly));
+    let prims: Vec<Primitive> = polys.iter().map(|poly| Primitive::Poly(poly.clone())).collect();
 
-    let mut parser = SceneParser::new(scene_path);
     let mut scene = parser.parse_scene();
-    scene.primitives = scene.primitives + prims.as_slice();
+    scene.primitives = scene.primitives + &prims[];
     scene::BvhScene::from_scene(scene)
 }
 
@@ -256,13 +256,13 @@ illum 2
                 assert_eq!(obj.material_library.as_slice(), "cube.mtl");
                 assert_eq!(obj.objects.len(), 1);
             },
-            Err(e) => panic!("{}", e)
+            Err(e) => panic!("{:?}", e)
         }
 
         let mtl = mtl::parse(mtl_file.to_owned());
         match mtl {
             Ok(mtl) => assert_eq!(mtl.materials.len(), 2),
-            Err(e) => panic!("{}", e)
+            Err(e) => panic!("{:?}", e)
         }
     }
 

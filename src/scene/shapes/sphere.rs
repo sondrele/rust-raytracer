@@ -4,7 +4,7 @@ use ray::Ray;
 use scene::material::{Material, Color};
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
-#[derive(Clone, PartialEq, Show)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Sphere {
     pub materials: Vec<Material>,
     pub origin: Vec3,

@@ -1,12 +1,12 @@
-use std::num::FloatMath;
 use std::ops::Index;
+use std::num::Float;
 
 use vec::Vec3;
 use ray::Ray;
 use scene::material::{Material, Color};
 use scene::shapes::{BoundingBox, Shape, ShapeIntersection};
 
-#[derive(Copy, PartialEq, Show)]
+#[derive(Copy, PartialEq, Debug)]
 pub struct Vertex {
     pub mat_index: u32,
     pub has_normal: bool,
@@ -47,7 +47,7 @@ impl Index<u32> for Vertex {
     }
 }
 
-#[derive(Clone, PartialEq, Show)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Poly {
     pub materials: Vec<Material>,
     pub vertices: [Vertex; 3],

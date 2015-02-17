@@ -1,27 +1,26 @@
+#![feature(collections, env)]
+
 extern crate rstracer;
 extern crate getopts;
 
-use std::os;
+use std::env;
 use std::str::FromStr;
-use getopts::{Matches, optopt, optflag, getopts, OptGroup};
 
+use getopts::{Matches, Options};
+
+use rstracer::scene;
 use rstracer::scene::parser::SceneParser;
 use rstracer::scene::IntersectableScene;
 use rstracer::RayTracer;
 
-fn parse_command_line(program: &str, args: &[String], opts: &[OptGroup]) -> Matches {
-    match getopts(args, opts) {
-        Ok(m) => m,
-        Err(f) => {
-            println!("{}", getopts::usage(program, opts));
-            panic!(f.to_string())
-        }
-    }
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} [options]", program);
+    print!("{}", opts.usage(&brief[]));
 }
 
 fn get_opt<T:FromStr>(matches: &Matches, opt: &str, default: T) -> T {
     match matches.opt_str(opt) {
-        Some(opt_str) => opt_str.as_slice().parse().unwrap_or(default),
+        Some(opt_str) => opt_str[].parse().unwrap_or(default),
         None => default
     }
 }
@@ -35,26 +34,31 @@ fn get_str(matches: &Matches, opt: &str, default: &str) -> String {
 
 fn get_scene(matches: &Matches, default: &str) -> String {
     let name = get_str(matches, "i", default);
-    String::from_str("scenes/") + name.as_slice() + ".ascii"
+    "scenes/".to_string() + &name[] + ".ascii"
 }
 
 #[allow(dead_code)]
 fn main() {
-    let args: Vec<String> = os::args();
+    let args: Vec<String> = env::args().collect();
 
-    let program = args[0].as_slice();
-    let opts = [
-        optflag("h", "help", "Print this help menu"),
-        optflag("b", "bvh", "Optimize scene intersection with BVH-tree"),
-        optopt("s", "size", "The width and height of the image to be generated", "-s 500"),
-        optopt("a", "arealight-samples", "The number of times to sample the area lights", "-a 1000"),
-        optopt("d", "depth", "The depth of the recursion in the main loop", "-d 10"),
-        optopt("i", "scene", "The name of a scene located in the ./scenes directory", "-i test01"),
-        optopt("o", "out", "The name of the image to be generated", "-o image.bmp")
-    ];
-    let matches = parse_command_line(program, args.tail(), &opts);
+    let program = &args[0][];
+    let mut opts = Options::new();
+    opts.optflag("h", "help", "Print this help menu");
+    opts.optflag("b", "bvh", "Optimize scene intersection with BVH-tree");
+    opts.optflag("j", "obj", "Load extra primitives to a BVH-optimized scene from an .obj file with the same name as the scene name");
+    opts.optopt("s", "size", "The width and height of the image to be generated", "-s 500");
+    opts.optopt("a", "arealight-samples", "The number of times to sample the area lights", "-a 1000");
+    opts.optopt("d", "depth", "The depth of the recursion in the main loop", "-d 10");
+    opts.optopt("i", "scene", "The name of a scene located in the ./scenes directory", "-i test01");
+    opts.optopt("o", "out", "The name of the image to be generated", "-o image.bmp");
+
+    let matches = match opts.parse(args.tail()) {
+        Ok(m) => { m }
+        Err(f) => { panic!(f.to_string()) }
+    };
+
     if matches.opt_present("h") {
-        println!("{}", getopts::usage(program, &opts));
+        print_usage(&program[], opts);
         return;
     }
 
@@ -62,16 +66,19 @@ fn main() {
     let area_samples = get_opt(&matches, "a", 10);
     let depth = get_opt(&matches, "d", 10);
     let scene = get_scene(&matches, "test01");
+    let obj_scene = scene.replace(".ascii", ".obj");
     let out = get_str(&matches, "o", "img") + ".bmp";
 
     let mut parser = SceneParser::new(scene);
-    let scene: Box<IntersectableScene> = if matches.opt_present("b") {
-        box parser.parse_bvh_scene()
+    let scene: Box<IntersectableScene> = if matches.opt_present("j") {
+        Box::new(scene::from_obj::parse_obj_scene(&mut parser, obj_scene))
+    } else if matches.opt_present("b")  {
+        Box::new(parser.parse_bvh_scene())
     } else {
-        box parser.parse_scene()
+        Box::new(parser.parse_scene())
     };
     let mut tracer = RayTracer::init(size, size, depth, area_samples);
     tracer.set_scene(scene);
     let img = tracer.trace_rays();
-    img.save(out.as_slice());
+    let _ = img.save(&out[]);
 }

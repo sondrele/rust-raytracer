@@ -2,7 +2,7 @@ use std::num::Float;
 use bmp::Pixel;
 use std::ops::{Add, Mul};
 
-#[derive(Clone, Copy, PartialEq, Show)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Color {
     r: f32,
     g: f32,
@@ -83,7 +83,7 @@ impl Add for Color {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Show)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Material {
     pub diffuse: Color,
     pub ambient: Color,
