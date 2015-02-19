@@ -47,7 +47,7 @@ fn convert_material(mtl: &mtl::Material) -> Material {
     m.ambient = convert_color(mtl.color_ambient);
     m.specular = convert_color(mtl.color_specular);
     m.shininess = mtl.specular_coefficient as f32;
-    m.transparency = mtl.alpha as f32;
+    m.transparency = (1.0 - mtl.alpha) as f32;
     m
 }
 
@@ -56,6 +56,7 @@ fn convert_materials(mtl_set: mtl::MtlSet) -> HashMap<String, Material> {
     for mtl in mtl_set.materials.iter() {
         m.insert(mtl.name.clone(), convert_material(mtl));
     }
+    println!("{:?}", m);
     m
 }
 
@@ -72,7 +73,7 @@ fn convert_objects(objects: &Vec<obj::Object>,
     let mut polys = Vec::new();
     for obj in objects.iter() {
         let ps = convert_object(obj, mtls);
-        polys = polys + ps.as_slice();
+        polys = polys + &ps[];
     }
     polys
 }
@@ -81,7 +82,7 @@ fn convert_object(object: &obj::Object, mtls: &HashMap<String, Material>) -> Vec
     let mut polys = Vec::new();
     for geo in object.geometry.iter() {
         let ps = convert_geometry(geo, object, mtls);
-        polys = polys + ps.as_slice();
+        polys = polys + &ps[];
     }
     polys
 }
@@ -143,8 +144,8 @@ pub fn parse_obj_scene<'a>(parser: &mut SceneParser, obj_path: String) -> scene:
     let objset = parse_obj(&obj_path);
     let mtl_path = "scenes/".to_string() + &objset.material_library[];
     let mtllib = parse_mtl(&mtl_path[]);
-
     let materials = convert_materials(mtllib);
+
     let polys = convert_objects(&objset.objects, &materials);
     let prims: Vec<Primitive> = polys.iter().map(|poly| Primitive::Poly(poly.clone())).collect();
 
@@ -161,7 +162,7 @@ mod test {
     use std::borrow::ToOwned;
     use self::wavefront_obj::{obj, mtl};
 
-    use super::{parse_mtl, parse_obj};
+    use super::{parse_mtl, parse_obj, convert_materials, convert_objects};
 
     static TEST_PATH : &'static str  = "src/scene/from_obj/test/";
 
@@ -250,40 +251,41 @@ d 1
 illum 2
 
 "#;
-        let obj = obj::parse(obj_file.to_owned());
-        match obj {
-            Ok(obj) => {
-                assert_eq!(obj.material_library.as_slice(), "cube.mtl");
-                assert_eq!(obj.objects.len(), 1);
-            },
-            Err(e) => panic!("{:?}", e)
-        }
+        let obj = obj::parse(obj_file.to_owned()).ok().unwrap();
+        assert_eq!(&obj.material_library[], "cube.mtl");
+        assert_eq!(obj.objects.len(), 1);
+        assert_eq!(obj.objects[0].geometry[0].shapes.len(), 12);
 
-        let mtl = mtl::parse(mtl_file.to_owned());
-        match mtl {
-            Ok(mtl) => assert_eq!(mtl.materials.len(), 2),
-            Err(e) => panic!("{:?}", e)
-        }
+        let mtl = mtl::parse(mtl_file.to_owned()).ok().unwrap();
+        assert_eq!(mtl.materials.len(), 2);
     }
 
     #[test]
     fn parse_mtl_file() {
         let path = String::from_str(TEST_PATH) + "cube.mtl";
-        let mtl = parse_mtl(path.as_slice());
+        let mtl = parse_mtl(&path[]);
         assert_eq!(mtl.materials.len(), 2)
     }
 
     #[test]
     fn parse_obj_file() {
         let path = String::from_str(TEST_PATH) + "cube.obj";
-        let obj = parse_obj(path.as_slice());
-        assert_eq!(obj.material_library.as_slice(), "cube.mtl");
+        let obj = parse_obj(&path[]);
+        assert_eq!(&obj.material_library[], "cube.mtl");
         assert_eq!(obj.objects.len(), 1)
     }
 
     #[test]
-    fn parse_and_convert_mtl() {
+    fn convert_objects_to_polys() {
+        let obj_path = String::from_str(TEST_PATH) + "cube.obj";
+        let mtl_path = String::from_str(TEST_PATH) + "cube.mtl";
+        let objset = parse_obj(&obj_path[]);
+        let mtllib = parse_mtl(&mtl_path[]);
+        let materials = convert_materials(mtllib);
 
+        let polys = convert_objects(&objset.objects, &materials);
+        assert_eq!(polys.len(), 12);
+        assert_eq!(polys[0].materials[0], *materials.get("Material").unwrap());
     }
 
 }

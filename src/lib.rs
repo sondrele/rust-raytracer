@@ -1,4 +1,4 @@
-#![feature(core, io, path, test)]
+#![feature(collections, core, io, path, test)]
 
 extern crate bmp;
 extern crate rand;
