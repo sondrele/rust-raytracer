@@ -6,28 +6,28 @@ use self::NodeIntersection::{Hit, Missed};
 
 
 #[derive(PartialEq, Debug)]
-pub enum Node<'a> {
-    Member(Box<TreeNode<'a>>),
-    Leaf(Box<TreeNode<'a>>),
+pub enum Node {
+    Member(Box<TreeNode>),
+    Leaf(Box<TreeNode>),
     Empty
 }
 
 #[derive(PartialEq, Debug)]
 pub enum NodeIntersection<'a> {
-    Hit(&'a Box<TreeNode<'a>>, f32),
+    Hit(&'a Box<TreeNode>, f32),
     Missed
 }
 
 #[derive(PartialEq, Debug)]
-pub struct TreeNode<'a> {
-    left: Node<'a>,
-    right: Node<'a>,
+pub struct TreeNode {
+    left: Node,
+    right: Node,
     shape: Option<Primitive>,
     bbox: BoundingBox
 }
 
-impl<'a> TreeNode<'a> {
-    pub fn new() -> TreeNode<'a> {
+impl<'a> TreeNode {
+    pub fn new() -> TreeNode {
         TreeNode {
             left: Node::Empty,
             right: Node::Empty,
@@ -36,7 +36,7 @@ impl<'a> TreeNode<'a> {
         }
     }
 
-    fn get_bbox(node: &Node<'a>) -> BoundingBox {
+    fn get_bbox(node: &Node) -> BoundingBox {
         match node {
             &Node::Member(ref n) => n.bbox,
             &Node::Leaf(ref n) => n.bbox,
@@ -44,7 +44,7 @@ impl<'a> TreeNode<'a> {
         }
     }
 
-    pub fn init(left: Node<'a>, right: Node<'a>) -> TreeNode<'a> {
+    pub fn init(left: Node, right: Node) -> TreeNode {
         let left_bbox = TreeNode::get_bbox(&left);
         let right_bbox = TreeNode::get_bbox(&right);
 
@@ -68,12 +68,12 @@ impl<'a> TreeNode<'a> {
     }
 }
 
-pub struct Tree<'a> {
-    pub root: Node<'a>
+pub struct Tree {
+    pub root: Node
 }
 
-impl<'a> Tree<'a> {
-    pub fn new() -> Tree<'a> {
+impl<'a> Tree {
+    pub fn new() -> Tree {
         Tree {
             root: Node::Empty
         }
@@ -85,7 +85,7 @@ impl<'a> Tree<'a> {
         self.root = root;
     }
 
-    fn build(&mut self, shapes: &'a mut [Primitive], depth: usize) -> Node<'a> {
+    fn build(&mut self, shapes: &'a mut [Primitive], depth: usize) -> Node {
         match shapes.len() {
             0 => Node::Empty,
             1 => {
@@ -116,7 +116,7 @@ impl<'a> Tree<'a> {
         Tree::intersects_node(&self.root, ray)
     }
 
-    fn intersects_node(node: &'a Node<'a>, ray: &Ray) -> NodeIntersection<'a> {
+    fn intersects_node(node: &'a Node, ray: &Ray) -> NodeIntersection<'a> {
         match node {
             &Node::Empty => Missed,
             &Node::Leaf(ref node) => match node.shape {

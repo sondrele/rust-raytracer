@@ -1,4 +1,4 @@
-#![feature(collections, env)]
+#![feature(collections)]
 
 extern crate rstracer;
 extern crate getopts;
@@ -14,12 +14,12 @@ use rstracer::RayTracer;
 
 fn print_usage(program: &str, opts: Options) {
     let brief = format!("Usage: {} [options]", program);
-    print!("{}", opts.usage(&brief[]));
+    print!("{}", opts.usage(&brief));
 }
 
 fn get_opt<T:FromStr>(matches: &Matches, opt: &str, default: T) -> T {
     match matches.opt_str(opt) {
-        Some(opt_str) => opt_str[].parse().unwrap_or(default),
+        Some(opt_str) => opt_str.parse().unwrap_or(default),
         None => default
     }
 }
@@ -33,14 +33,14 @@ fn get_str(matches: &Matches, opt: &str, default: &str) -> String {
 
 fn get_scene(matches: &Matches, default: &str) -> String {
     let name = get_str(matches, "i", default);
-    "scenes/".to_string() + &name[] + ".ascii"
+    "scenes/".to_string() + &name + ".ascii"
 }
 
 #[allow(dead_code)]
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let program = &args[0][];
+    let program = &args[0];
     let mut opts = Options::new();
     opts.optflag("h", "help", "Print this help menu");
     opts.optflag("b", "bvh", "Optimize scene intersection with BVH-tree");
@@ -56,7 +56,7 @@ fn main() {
     };
 
     if matches.opt_present("h") {
-        print_usage(&program[], opts);
+        print_usage(&program, opts);
         return;
     }
 
@@ -75,5 +75,5 @@ fn main() {
     let mut tracer = RayTracer::init(size, size, depth, area_samples);
     tracer.set_scene(scene);
     let img = tracer.trace_rays();
-    let _ = img.save(&out[]);
+    let _ = img.save(&out);
 }

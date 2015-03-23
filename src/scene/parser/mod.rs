@@ -1,5 +1,6 @@
-use std::old_io as io;
-use std::old_io::{BufferedReader, File};
+use std::io::Read;
+use std::io::Bytes;
+use std::fs::File;
 use std::str::FromStr;
 
 use vec::Vec3;
@@ -9,7 +10,7 @@ use scene::shapes::{sphere, poly};
 use scene::shapes::Primitive::{Sphere, Poly};
 
 pub struct SceneParser {
-    reader: BufferedReader<File>,
+    bytes: Bytes<File>,
     finished: bool,
     peaked: bool,
     last_token: Option<String>
@@ -17,17 +18,17 @@ pub struct SceneParser {
 
 impl SceneParser {
     pub fn new(scene: String) -> SceneParser {
-        SceneParser{
-            reader: SceneParser::read_file(scene),
+        SceneParser {
+            bytes: SceneParser::read_file(scene),
             finished: false,
             peaked: false,
             last_token: None
         }
     }
 
-    fn read_file(path: String) -> BufferedReader<File> {
-        match File::open(&Path::new(path.clone())) {
-            Ok(f) => BufferedReader::new(f),
+    fn read_file(path: String) -> Bytes<File> {
+        match File::open(&path) {
+            Ok(f) => f.bytes(),
             Err(e) => panic!("file error: {}, path: {}", e, path.clone())
         }
     }
@@ -62,14 +63,14 @@ impl SceneParser {
 
         let mut buf = String::new();
         loop {
-            let c = match self.reader.read_byte() {
-                Ok(c) => c as char,
-                Err(e) => match e.kind {
-                    io::EndOfFile => {
-                        self.finished = true;
-                        return buf.to_string();
-                    },
-                    _ => panic!("Read error: {}", e)
+            let c = match self.bytes.next() {
+                Some(res) => match res {
+                    Ok(c) => c as char,
+                    Err(e) => panic!("{}", e)
+                },
+                None => {
+                    self.finished = true;
+                    return buf.to_string();
                 }
             };
             if !c.is_whitespace() {
@@ -310,7 +311,7 @@ impl SceneParser {
         camera
     }
 
-    pub fn parse_scene<'a>(&mut self) -> Scene<'a> {
+    pub fn parse_scene<'a>(&mut self) -> Scene {
         self.check_and_consume("Composer");
         self.check_and_consume("format");
         self.check_and_consume("2.1");
@@ -337,14 +338,14 @@ impl SceneParser {
                     }
                 },
                 token if token.ends_with("light") => scene.lights.push(self.parse_light()),
-                _ => panic!("Unexpected token: {}", tkn)
+                other => panic!("Unexpected token: {}", other)
             }
             tkn = self.peak();
         }
         scene
     }
 
-    pub fn parse_bvh_scene<'a>(&mut self) -> BvhScene<'a> {
+    pub fn parse_bvh_scene<'a>(&mut self) -> BvhScene {
         let scene = self.parse_scene();
         BvhScene::from_scene(scene)
     }
