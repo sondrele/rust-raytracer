@@ -153,14 +153,14 @@ pub trait IntersectableScene<'a> {
     fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a>;
 }
 
-pub struct Scene<'a> {
+pub struct Scene {
     pub camera: Camera,
     pub lights: Vec<Light>,
     pub primitives: Vec<shapes::Primitive>
 }
 
-impl<'a> Scene<'a> {
-    pub fn new() -> Scene<'a> {
+impl<'a> Scene {
+    pub fn new() -> Scene {
         Scene {
             camera: Camera::new(),
             lights: Vec::new(),
@@ -169,13 +169,13 @@ impl<'a> Scene<'a> {
     }
 }
 
-impl<'a> IntersectableScene<'a> for Scene<'a> {
+impl<'a> IntersectableScene<'a> for Scene {
     fn get_camera(&self) -> &Camera {
         &self.camera
     }
 
     fn get_lights(&self) -> &[Light] {
-        &self.lights[]
+        &self.lights
     }
 
     fn intersects(&'a self, ray: &Ray) -> SceneIntersection<'a> {
@@ -201,14 +201,14 @@ impl<'a> IntersectableScene<'a> for Scene<'a> {
     }
 }
 
-pub struct BvhScene<'a> {
+pub struct BvhScene {
     pub camera: Camera,
     pub lights: Vec<Light>,
-    pub tree: Tree<'a>
+    pub tree: Tree
 }
 
-impl<'a> BvhScene<'a> {
-    pub fn new() -> BvhScene<'a> {
+impl<'a> BvhScene {
+    pub fn new() -> BvhScene {
         BvhScene {
             camera: Camera::new(),
             lights: Vec::new(),
@@ -216,7 +216,7 @@ impl<'a> BvhScene<'a> {
         }
     }
 
-    pub fn from_scene(scene: Scene<'a>) -> BvhScene<'a> {
+    pub fn from_scene(scene: Scene) -> BvhScene {
         let mut bvh_scene = BvhScene::new();
         bvh_scene.camera = scene.camera;
         bvh_scene.lights = scene.lights;
@@ -225,7 +225,7 @@ impl<'a> BvhScene<'a> {
     }
 }
 
-impl<'a> IntersectableScene<'a> for BvhScene<'a> {
+impl<'a> IntersectableScene<'a> for BvhScene {
     fn get_camera(&self) -> &Camera {
         &self.camera
     }
@@ -252,7 +252,7 @@ mod tests {
     use scene::shapes::{sphere, Primitive};
     use scene::material::{Color, Material};
 
-    fn create_scene<'a>() -> Scene<'a> {
+    fn create_scene<'a>() -> Scene {
         let mut sphere = sphere::Sphere::init(Vec3::init(0.0, 0.0, -5.0), 1.0);
         sphere.materials.insert(0, Material::init(Color::init(1.0, 0.0, 0.0)));
         let mut scene = Scene::new();

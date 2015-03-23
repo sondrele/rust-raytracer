@@ -11,7 +11,7 @@ use self::Primitive::{Sphere, Poly};
 pub mod sphere;
 pub mod poly;
 
-pub enum ShapeIntersection<'a> {
+pub enum ShapeIntersection {
     Hit(f32),
     Missed
 }

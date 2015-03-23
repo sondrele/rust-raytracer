@@ -1,4 +1,5 @@
-#![feature(core, io, path, test)]
+#![feature(core)]
+#![cfg_attr(test, feature(test))]
 
 extern crate bmp;
 extern crate rand;
