@@ -18,7 +18,7 @@ pub struct SceneParser {
 
 impl SceneParser {
     pub fn new(scene: String) -> SceneParser {
-        SceneParser{
+        SceneParser {
             bytes: SceneParser::read_file(scene),
             finished: false,
             peaked: false,
